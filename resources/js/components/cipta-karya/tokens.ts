@@ -11,7 +11,7 @@
  * tipografi, dan spacing tetap mengikuti mockup apa adanya.
  */
 export const ckColors = {
-    bg: '#F4F3F0',
+    bg: '#FFFFFF',
     text: '#1D1C1A',
     textMuted: '#8C8A85',
     textMuted2: '#86847E',

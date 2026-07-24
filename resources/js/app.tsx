@@ -19,7 +19,8 @@ createInertiaApp({
             // lihat resources/js/components/cipta-karya/ — jadi tidak dibungkus
             // AppLayout/AppSidebar standar seperti halaman lain.
             case name === 'dashboard':
-            case name === 'paket/show':
+            case name.startsWith('paket/'):
+            case name === 'audit/review':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;

@@ -217,7 +217,7 @@ export function CiptaKaryaSidebar({ active }: { active: CiptaKaryaNavKey }) {
                 display: 'flex',
                 flexDirection: 'column',
                 padding: '16px 12px 14px',
-                background: 'rgba(248,247,244,.72)',
+                background: 'rgba(255,255,255,.72)',
                 backdropFilter: 'blur(28px) saturate(180%)',
                 WebkitBackdropFilter: 'blur(28px) saturate(180%)',
                 borderRight: `1px solid ${ckColors.borderSoft}`,

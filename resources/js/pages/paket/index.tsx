@@ -15,6 +15,8 @@ import { formatCurrency } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import { create, index, show } from '@/routes/paket';
 import type { Paginated, Paket } from '@/types';
+import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
+import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
 
 export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
     const { data, current_page, last_page, from, to, total } = pakets;
@@ -23,19 +25,41 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
         <>
             <Head title="Data Paket" />
 
-            <div className="flex flex-1 flex-col gap-4 p-4">
-                <div className="flex items-center justify-between">
-                    <Heading
-                        title="Data Paket"
-                        description="Daftar paket proyek gedung yang tercatat."
-                    />
+            <div
+                style={{
+                    display: 'flex',
+                    height: '100vh',
+                    width: '100%',
+                    background: ckColors.bg,
+                    color: ckColors.text,
+                    overflow: 'hidden',
+                    fontFamily: ckFont,
+                    WebkitFontSmoothing: 'antialiased',
+                }}
+            >
+                <CiptaKaryaSidebar active="paket" />
 
-                    <Button asChild>
-                        <Link href={create()}>Tambah Paket</Link>
-                    </Button>
-                </div>
+                <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+                    <div
+                        style={{
+                            maxWidth: 1180,
+                            margin: '0 auto',
+                            padding: '40px 48px 72px',
+                        }}
+                    >
+                        <div className="flex flex-col gap-6">
+                            <div className="flex items-center justify-between">
+                                <Heading
+                                    title="Data Paket"
+                                    description="Daftar paket proyek gedung yang tercatat."
+                                />
 
-                <Card>
+                                <Button asChild>
+                                    <Link href={create()}>Tambah Paket</Link>
+                                </Button>
+                            </div>
+
+                            <Card className="border border-neutral-100 shadow-xs">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -129,14 +153,10 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                         </div>
                     </div>
                 )}
+                        </div>
+                    </div>
+                </main>
             </div>
         </>
     );
 }
-
-PaketIndex.layout = {
-    breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Data Paket', href: index() },
-    ],
-};

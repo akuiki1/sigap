@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { dashboard } from '@/routes';
 import { create, index } from '@/routes/paket';
 import type { StatusOption } from '@/types';
+import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
+import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
 
 export default function PaketCreate({
     statusOptions,
@@ -16,30 +18,47 @@ export default function PaketCreate({
         <>
             <Head title="Tambah Paket" />
 
-            <div className="flex flex-1 flex-col gap-4 p-4">
-                <Heading
-                    title="Tambah Paket"
-                    description="Form penambahan data paket proyek gedung."
-                />
+            <div
+                style={{
+                    display: 'flex',
+                    height: '100vh',
+                    width: '100%',
+                    background: ckColors.bg,
+                    color: ckColors.text,
+                    overflow: 'hidden',
+                    fontFamily: ckFont,
+                    WebkitFontSmoothing: 'antialiased',
+                }}
+            >
+                <CiptaKaryaSidebar active="paket" />
 
-                <Card>
-                    <CardContent>
-                        <PaketForm
-                            action={PaketController.store.form()}
-                            statusOptions={statusOptions}
-                            submitLabel="Simpan Paket"
-                        />
-                    </CardContent>
-                </Card>
+                <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+                    <div
+                        style={{
+                            maxWidth: 1180,
+                            margin: '0 auto',
+                            padding: '40px 48px 72px',
+                        }}
+                    >
+                        <div className="flex flex-col gap-6">
+                            <Heading
+                                title="Tambah Paket"
+                                description="Form penambahan data paket proyek gedung."
+                            />
+
+                            <Card className="border border-neutral-100 shadow-xs">
+                                <CardContent className="pt-6">
+                                    <PaketForm
+                                        action={PaketController.store.form()}
+                                        statusOptions={statusOptions}
+                                        submitLabel="Simpan Paket"
+                                    />
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </main>
             </div>
         </>
     );
 }
-
-PaketCreate.layout = {
-    breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Data Paket', href: index() },
-        { title: 'Tambah Paket', href: create() },
-    ],
-};
