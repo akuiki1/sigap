@@ -1,22 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
-import Heading from '@/components/heading';
 import { PaketStatusBadge } from '@/components/paket-status-badge';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
-import { dashboard } from '@/routes';
 import { create, index, show } from '@/routes/paket';
 import type { Paginated, Paket } from '@/types';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
+import { CkCard, CkRow, CkChevron } from '@/components/cipta-karya/primitives';
 
 export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
     const { data, current_page, last_page, from, to, total } = pakets;
@@ -48,111 +37,266 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                         }}
                     >
                         <div className="flex flex-col gap-6">
-                            <div className="flex items-center justify-between">
-                                <Heading
-                                    title="Data Paket"
-                                    description="Daftar paket proyek gedung yang tercatat."
-                                />
-
-                                <Button asChild>
-                                    <Link href={create()}>Tambah Paket</Link>
-                                </Button>
-                            </div>
-
-                            <Card className="border border-neutral-100 shadow-xs">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Kode</TableHead>
-                                <TableHead>Nama Paket</TableHead>
-                                <TableHead>Nilai Kontrak</TableHead>
-                                <TableHead>Progres</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell
-                                        colSpan={5}
-                                        className="text-center text-muted-foreground"
+                            <header
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-end',
+                                    justifyContent: 'space-between',
+                                    gap: 24,
+                                    marginBottom: 8,
+                                }}
+                            >
+                                <div>
+                                    <div
+                                        style={{
+                                            fontSize: 13,
+                                            fontWeight: 520,
+                                            color: ckColors.textMuted,
+                                            letterSpacing: '.01em',
+                                        }}
                                     >
-                                        Belum ada data paket.
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                data.map((paket) => (
-                                    <TableRow key={paket.id}>
-                                        <TableCell className="font-mono text-xs">
-                                            {paket.kode_paket}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Link
-                                                href={show(paket.id)}
-                                                className="font-medium hover:underline"
+                                        Administrasi Paket · Bidang Cipta Karya
+                                    </div>
+                                    <h1
+                                        style={{
+                                            fontSize: 28,
+                                            fontWeight: 680,
+                                            letterSpacing: '-.025em',
+                                            color: ckColors.text,
+                                            marginTop: 3,
+                                            marginBottom: 0,
+                                        }}
+                                    >
+                                        Daftar Paket
+                                    </h1>
+                                </div>
+
+                                <Link
+                                    href={create()}
+                                    className="ck-btn-accent"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 6,
+                                        padding: '10px 16px',
+                                        borderRadius: 12,
+                                        background: ckColors.accent,
+                                        color: '#fff',
+                                        cursor: 'pointer',
+                                        fontSize: 14,
+                                        fontWeight: 590,
+                                        letterSpacing: '-.01em',
+                                    }}
+                                >
+                                    <svg
+                                        width="14"
+                                        height="14"
+                                        viewBox="0 0 16 16"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        strokeLinecap="round"
+                                    >
+                                        <path d="M8 2.5v11M2.5 8h11" />
+                                    </svg>
+                                    Tambah Paket
+                                </Link>
+                            </header>
+
+                            <CkCard>
+                                {data.length === 0 ? (
+                                    <div
+                                        style={{
+                                            padding: '36px 18px',
+                                            fontSize: 14.5,
+                                            color: ckColors.textMuted,
+                                            textAlign: 'center',
+                                        }}
+                                    >
+                                        Belum ada data paket proyek Cipta Karya.
+                                    </div>
+                                ) : (
+                                    data.map((paket, i) => (
+                                        <CkRow
+                                            key={paket.id}
+                                            href={show(paket.id).url}
+                                            first={i === 0}
+                                        >
+                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                                <div
+                                                    style={{
+                                                        fontSize: 15.5,
+                                                        fontWeight: 580,
+                                                        letterSpacing: '-.015em',
+                                                        color: ckColors.text,
+                                                    }}
+                                                >
+                                                    {paket.nama}
+                                                </div>
+                                                <div
+                                                    style={{
+                                                        fontSize: 12.5,
+                                                        color: ckColors.textMuted2,
+                                                        marginTop: 3.5,
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 6,
+                                                    }}
+                                                >
+                                                    <span
+                                                        style={{
+                                                            fontFamily: 'monospace',
+                                                            fontSize: 11,
+                                                            background: 'rgba(0,0,0,.04)',
+                                                            padding: '1px 5px',
+                                                            borderRadius: 4,
+                                                            color: ckColors.textMuted,
+                                                        }}
+                                                    >
+                                                        {paket.kode_paket}
+                                                    </span>
+                                                    <span>•</span>
+                                                    <span>{formatCurrency(paket.nilai_kontrak)}</span>
+                                                    {paket.penyedia && (
+                                                        <>
+                                                            <span>•</span>
+                                                            <span style={{ color: ckColors.textMuted }}>
+                                                                {paket.penyedia}
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: 16,
+                                                }}
                                             >
-                                                {paket.nama}
+                                                <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
+                                                    <div
+                                                        style={{
+                                                            fontSize: 14.5,
+                                                            fontWeight: 570,
+                                                            color: ckColors.text,
+                                                        }}
+                                                    >
+                                                        {paket.progres}%
+                                                    </div>
+                                                    <div
+                                                        style={{
+                                                            fontSize: 11.5,
+                                                            color: ckColors.textMuted,
+                                                            marginTop: 1,
+                                                        }}
+                                                    >
+                                                        Fisik
+                                                    </div>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                                    <PaketStatusBadge status={paket.status} />
+                                                </div>
+                                                <CkChevron />
+                                            </div>
+                                        </CkRow>
+                                    ))
+                                )}
+                            </CkCard>
+
+                            {last_page > 1 && (
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        marginTop: 8,
+                                        padding: '0 4px',
+                                    }}
+                                >
+                                    <p style={{ fontSize: 13.5, color: ckColors.textMuted }}>
+                                        Menampilkan {from ?? 0}–{to ?? 0} dari {total} paket
+                                    </p>
+
+                                    <div style={{ display: 'flex', gap: 8 }}>
+                                        {current_page > 1 ? (
+                                            <Link
+                                                href={index({
+                                                    query: { page: current_page - 1 },
+                                                })}
+                                                className="ck-btn-accent"
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    padding: '7px 13px',
+                                                    borderRadius: 10,
+                                                    border: `1px solid ${ckColors.border}`,
+                                                    color: ckColors.text,
+                                                    fontSize: 13,
+                                                    fontWeight: 550,
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                Sebelumnya
                                             </Link>
-                                        </TableCell>
-                                        <TableCell>
-                                            {formatCurrency(
-                                                paket.nilai_kontrak,
-                                            )}
-                                        </TableCell>
-                                        <TableCell>{paket.progres}%</TableCell>
-                                        <TableCell>
-                                            <PaketStatusBadge
-                                                status={paket.status}
-                                            />
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </Card>
+                                        ) : (
+                                            <span
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    padding: '7px 13px',
+                                                    borderRadius: 10,
+                                                    border: `1px solid ${ckColors.borderSoft}`,
+                                                    color: ckColors.textMuted4,
+                                                    fontSize: 13,
+                                                    fontWeight: 550,
+                                                    opacity: 0.5,
+                                                }}
+                                            >
+                                                Sebelumnya
+                                            </span>
+                                        )}
 
-                {last_page > 1 && (
-                    <div className="flex items-center justify-between">
-                        <p className="text-sm text-muted-foreground">
-                            Menampilkan {from ?? 0}–{to ?? 0} dari {total} paket
-                        </p>
-
-                        <div className="flex gap-2">
-                            {current_page > 1 ? (
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        href={index({
-                                            query: { page: current_page - 1 },
-                                        })}
-                                    >
-                                        Sebelumnya
-                                    </Link>
-                                </Button>
-                            ) : (
-                                <Button variant="outline" size="sm" disabled>
-                                    Sebelumnya
-                                </Button>
+                                        {current_page < last_page ? (
+                                            <Link
+                                                href={index({
+                                                    query: { page: current_page + 1 },
+                                                })}
+                                                className="ck-btn-accent"
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    padding: '7px 13px',
+                                                    borderRadius: 10,
+                                                    border: `1px solid ${ckColors.border}`,
+                                                    color: ckColors.text,
+                                                    fontSize: 13,
+                                                    fontWeight: 550,
+                                                    cursor: 'pointer',
+                                                }}
+                                            >
+                                                Berikutnya
+                                            </Link>
+                                        ) : (
+                                            <span
+                                                style={{
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    padding: '7px 13px',
+                                                    borderRadius: 10,
+                                                    border: `1px solid ${ckColors.borderSoft}`,
+                                                    color: ckColors.textMuted4,
+                                                    fontSize: 13,
+                                                    fontWeight: 550,
+                                                    opacity: 0.5,
+                                                }}
+                                            >
+                                                Berikutnya
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             )}
-
-                            {current_page < last_page ? (
-                                <Button variant="outline" size="sm" asChild>
-                                    <Link
-                                        href={index({
-                                            query: { page: current_page + 1 },
-                                        })}
-                                    >
-                                        Berikutnya
-                                    </Link>
-                                </Button>
-                            ) : (
-                                <Button variant="outline" size="sm" disabled>
-                                    Berikutnya
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                )}
                         </div>
                     </div>
                 </main>

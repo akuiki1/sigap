@@ -1,6 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
 import InputError from '@/components/input-error';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -14,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { index } from '@/routes/paket';
 import type { Paket, StatusOption } from '@/types';
 import type { RouteFormDefinition } from '@/wayfinder';
+import { ckColors } from '@/components/cipta-karya/tokens';
 
 type PaketFormProps = {
     action: RouteFormDefinition<'post'> | RouteFormDefinition<'put'>;
@@ -379,14 +379,47 @@ export function PaketForm({
                         <InputError message={errors.keterangan} />
                     </div>
 
-                    <div className="flex items-center gap-3">
-                        <Button type="submit" disabled={processing}>
+                    <div className="flex items-center gap-3 pt-4">
+                        <button
+                            type="submit"
+                            disabled={processing}
+                            className="ck-btn-accent"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '10px 20px',
+                                borderRadius: 12,
+                                background: ckColors.accent,
+                                color: '#fff',
+                                cursor: processing ? 'not-allowed' : 'pointer',
+                                fontSize: 14,
+                                fontWeight: 590,
+                                letterSpacing: '-.01em',
+                                border: 'none',
+                                opacity: processing ? 0.6 : 1,
+                            }}
+                        >
                             {submitLabel}
-                        </Button>
+                        </button>
 
-                        <Button variant="outline" asChild>
-                            <Link href={index()}>Batal</Link>
-                        </Button>
+                        <Link
+                            href={index()}
+                            className="ck-btn-accent"
+                            style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                padding: '9px 18px',
+                                borderRadius: 12,
+                                border: `1px solid ${ckColors.border}`,
+                                color: ckColors.text,
+                                cursor: 'pointer',
+                                fontSize: 14,
+                                fontWeight: 590,
+                                letterSpacing: '-.01em',
+                            }}
+                        >
+                            Batal
+                        </Link>
                     </div>
                 </>
             )}

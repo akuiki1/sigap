@@ -1,13 +1,10 @@
 import { Head } from '@inertiajs/react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
-import Heading from '@/components/heading';
 import { PaketForm } from '@/components/paket-form';
-import { Card, CardContent } from '@/components/ui/card';
-import { dashboard } from '@/routes';
-import { index } from '@/routes/paket';
 import type { Paket, StatusOption } from '@/types';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
+import { CkCard } from '@/components/cipta-karya/primitives';
 
 export default function PaketEdit({
     paket,
@@ -43,21 +40,46 @@ export default function PaketEdit({
                         }}
                     >
                         <div className="flex flex-col gap-6">
-                            <Heading
-                                title="Ubah Paket"
-                                description={`Memperbarui data paket ${paket.kode_paket}.`}
-                            />
+                            <header
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: 4,
+                                    marginBottom: 8,
+                                }}
+                            >
+                                <div
+                                    style={{
+                                        fontSize: 13,
+                                        fontWeight: 520,
+                                        color: ckColors.textMuted,
+                                        letterSpacing: '.01em',
+                                    }}
+                                >
+                                    Administrasi Paket · Bidang Cipta Karya
+                                </div>
+                                <h1
+                                    style={{
+                                        fontSize: 28,
+                                        fontWeight: 680,
+                                        letterSpacing: '-.025em',
+                                        color: ckColors.text,
+                                        marginTop: 3,
+                                        marginBottom: 0,
+                                    }}
+                                >
+                                    Ubah Paket
+                                </h1>
+                            </header>
 
-                            <Card className="border border-neutral-100 shadow-xs">
-                                <CardContent className="pt-6">
-                                    <PaketForm
-                                        action={PaketController.update.form(paket.id)}
-                                        statusOptions={statusOptions}
-                                        submitLabel="Simpan Perubahan"
-                                        paket={paket}
-                                    />
-                                </CardContent>
-                            </Card>
+                            <CkCard padded={true}>
+                                <PaketForm
+                                    action={PaketController.update.form(paket.id)}
+                                    statusOptions={statusOptions}
+                                    submitLabel="Simpan Perubahan"
+                                    paket={paket}
+                                />
+                            </CkCard>
                         </div>
                     </div>
                 </main>
