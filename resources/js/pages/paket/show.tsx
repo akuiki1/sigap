@@ -1,10 +1,11 @@
-import { Form, Head, Link } from '@inertiajs/react';
-import type { ReactNode } from 'react';
+import { Head, Link, router } from '@inertiajs/react';
+import { Fragment, useState } from 'react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
-import Heading from '@/components/heading';
-import { PaketStatusBadge } from '@/components/paket-status-badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import '@/components/cipta-karya/cipta-karya.css';
+import { CkCard, CkSectionLabel } from '@/components/cipta-karya/primitives';
+import { SCurveChart } from '@/components/cipta-karya/s-curve-chart';
+import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
+import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
 import {
     Dialog,
     DialogClose,
@@ -14,125 +15,703 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { edit, index } from '@/routes/paket';
-import type { Paket } from '@/types';
+import paket, { edit, index } from '@/routes/paket';
+import type { ChecklistSection, Paket, ProgresAgregat } from '@/types';
 
-function Baris({ label, children }: { label: string; children: ReactNode }) {
+type PaketShowProps = {
+    paket: Paket;
+    statusLabel: string;
+    kelengkapanPersen: number;
+    dokumenWajibBelum: string[];
+    rencanaProgres: number | null;
+    sections: ChecklistSection[];
+    masaPelaksanaan: string | null;
+    progresAgregat: ProgresAgregat;
+};
+
+function formatShortDate(value: string | null): string {
+    if (!value) {
+        return '—';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+    }).format(new Date(value));
+}
+
+type StepState = 'done' | 'current' | 'pending';
+
+function TimelineStep({
+    label,
+    dateLabel,
+    state,
+}: {
+    label: string;
+    dateLabel: string;
+    state: StepState;
+}) {
     return (
-        <div className="grid gap-1 border-b py-3 last:border-b-0 sm:grid-cols-3 sm:gap-4">
-            <dt className="text-sm text-muted-foreground">{label}</dt>
-            <dd className="text-sm sm:col-span-2">{children}</dd>
+        <div
+            style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 9,
+                flex: 'none',
+                width: 72,
+                textAlign: 'center',
+            }}
+        >
+            <span
+                style={{
+                    width: 15,
+                    height: 15,
+                    borderRadius: '50%',
+                    background:
+                        state === 'pending'
+                            ? '#DCDAD4'
+                            : state === 'current'
+                              ? '#fff'
+                              : ckColors.accent,
+                    border:
+                        state === 'current'
+                            ? `4px solid ${ckColors.accent}`
+                            : undefined,
+                    boxSizing: 'border-box',
+                }}
+            />
+            <div style={{ lineHeight: 1.3 }}>
+                <div
+                    style={{
+                        fontSize: 12.5,
+                        fontWeight: 590,
+                        color: state === 'pending' ? '#B4B2AC' : ckColors.text,
+                    }}
+                >
+                    {label}
+                </div>
+                <div
+                    style={{
+                        fontSize: 11.5,
+                        color: state === 'pending' ? '#B4B2AC' : '#9C9A94',
+                        marginTop: 1,
+                    }}
+                >
+                    {dateLabel}
+                </div>
+            </div>
         </div>
     );
 }
 
-export default function PaketShow({ paket }: { paket: Paket }) {
+function TimelineConnector({ state }: { state: StepState }) {
+    return (
+        <div
+            style={{
+                flex: 1,
+                height: 2,
+                marginTop: 6.5,
+                background:
+                    state === 'done'
+                        ? ckColors.accent
+                        : state === 'current'
+                          ? `linear-gradient(90deg, ${ckColors.accent}, #DCDAD4)`
+                          : '#DCDAD4',
+            }}
+        />
+    );
+}
+
+export default function PaketShow({
+    paket: data,
+    statusLabel,
+    kelengkapanPersen,
+    dokumenWajibBelum,
+    sections,
+    masaPelaksanaan,
+    progresAgregat,
+}: PaketShowProps) {
+    const [pendingDoc, setPendingDoc] = useState<number | null>(null);
+
+    const now = new Date();
+    const milestones: { key: string; label: string; date: string | null }[] = [
+        { key: 'kontrak', label: 'Kontrak', date: data.tanggal_kontrak },
+        { key: 'spmk', label: 'SPMK', date: data.tanggal_spmk },
+        { key: 'mc0', label: 'MC-0', date: data.tanggal_mc0 },
+        { key: 'pho', label: 'PHO', date: data.tanggal_pho_rencana },
+    ];
+    let currentIndex = milestones.findIndex(
+        (m) => !m.date || new Date(m.date) > now,
+    );
+
+    if (currentIndex === -1) {
+        currentIndex = milestones.length; // semua sudah lewat
+    }
+
+    const stepStates: StepState[] = milestones.map((_, i) =>
+        i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'pending',
+    );
+
+    function toggleDokumen(checklistDokumenId: number) {
+        setPendingDoc(checklistDokumenId);
+        router.patch(
+            paket.dokumen.update({
+                paket: data.id,
+                checklistDokumen: checklistDokumenId,
+            }).url,
+            {},
+            {
+                preserveScroll: true,
+                onFinish: () => setPendingDoc(null),
+            },
+        );
+    }
+
     return (
         <>
-            <Head title={paket.kode_paket} />
+            <Head title={data.nama} />
 
-            <div className="flex flex-1 flex-col gap-4 p-4">
-                <div className="flex items-start justify-between gap-4">
-                    <Heading
-                        title={paket.nama}
-                        description={`Kode paket ${paket.kode_paket} · Tahun anggaran ${paket.tahun_anggaran}`}
-                    />
+            <div
+                style={{
+                    display: 'flex',
+                    height: '100vh',
+                    width: '100%',
+                    background: ckColors.bg,
+                    color: ckColors.text,
+                    overflow: 'hidden',
+                    fontFamily: ckFont,
+                    WebkitFontSmoothing: 'antialiased',
+                }}
+            >
+                <CiptaKaryaSidebar active="paket" />
 
-                    <div className="flex shrink-0 gap-2">
-                        <Button variant="outline" asChild>
-                            <Link href={edit(paket.id)}>Ubah</Link>
-                        </Button>
-
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="destructive">Hapus</Button>
-                            </DialogTrigger>
-
-                            <DialogContent>
-                                <DialogTitle>Hapus paket ini?</DialogTitle>
-                                <DialogDescription>
-                                    Paket {paket.kode_paket} akan dihapus
-                                    permanen dan tidak dapat dikembalikan.
-                                </DialogDescription>
-
-                                <Form
-                                    {...PaketController.destroy.form(paket.id)}
+                <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+                    <div
+                        style={{
+                            maxWidth: 1180,
+                            margin: '0 auto',
+                            padding: '40px 48px 72px',
+                        }}
+                    >
+                        <div
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: 16,
+                            }}
+                        >
+                            <Link
+                                href={dashboard()}
+                                className="ck-link-accent"
+                                style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 4,
+                                    color: ckColors.accent,
+                                    fontSize: 15,
+                                    fontWeight: 510,
+                                    letterSpacing: '-.01em',
+                                }}
+                            >
+                                <svg
+                                    width="9"
+                                    height="15"
+                                    viewBox="0 0 9 15"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="1.9"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
                                 >
-                                    {({ processing }) => (
+                                    <path d="M8 1L1.5 7.5 8 14" />
+                                </svg>
+                                Ringkasan
+                            </Link>
+
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: 14,
+                                    fontSize: 13.5,
+                                }}
+                            >
+                                <Link
+                                    href={edit(data.id)}
+                                    className="ck-link-accent"
+                                    style={{
+                                        color: ckColors.accent,
+                                        fontWeight: 520,
+                                    }}
+                                >
+                                    Ubah
+                                </Link>
+
+                                <Dialog>
+                                    <DialogTrigger asChild>
+                                        <button
+                                            type="button"
+                                            style={{
+                                                color: ckColors.danger,
+                                                fontWeight: 520,
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                font: 'inherit',
+                                                padding: 0,
+                                            }}
+                                        >
+                                            Hapus
+                                        </button>
+                                    </DialogTrigger>
+
+                                    <DialogContent>
+                                        <DialogTitle>
+                                            Hapus paket ini?
+                                        </DialogTitle>
+                                        <DialogDescription>
+                                            Paket {data.kode_paket} akan dihapus
+                                            permanen dan tidak dapat
+                                            dikembalikan.
+                                        </DialogDescription>
+
                                         <DialogFooter className="gap-2">
                                             <DialogClose asChild>
-                                                <Button variant="secondary">
+                                                <button
+                                                    type="button"
+                                                    className="rounded-md border px-3 py-1.5 text-sm"
+                                                >
                                                     Batal
-                                                </Button>
+                                                </button>
                                             </DialogClose>
 
-                                            <Button
-                                                variant="destructive"
-                                                disabled={processing}
-                                                asChild
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    router.delete(
+                                                        PaketController.destroy(
+                                                            data.id,
+                                                        ).url,
+                                                    )
+                                                }
+                                                className="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white"
                                             >
-                                                <button type="submit">
-                                                    Hapus Paket
-                                                </button>
-                                            </Button>
+                                                Hapus Paket
+                                            </button>
                                         </DialogFooter>
-                                    )}
-                                </Form>
-                            </DialogContent>
-                        </Dialog>
+                                    </DialogContent>
+                                </Dialog>
+                            </div>
+                        </div>
+
+                        <header style={{ marginTop: 14 }}>
+                            <div
+                                style={{
+                                    fontSize: 13,
+                                    fontWeight: 520,
+                                    color: ckColors.textMuted,
+                                    letterSpacing: '.01em',
+                                }}
+                            >
+                                {statusLabel} · TA {data.tahun_anggaran}
+                            </div>
+                            <h1
+                                style={{
+                                    fontSize: 'clamp(24px,2.4vw,30px)',
+                                    fontWeight: 660,
+                                    letterSpacing: '-.025em',
+                                    color: ckColors.text,
+                                    marginTop: 3,
+                                    maxWidth: '22ch',
+                                    lineHeight: 1.15,
+                                }}
+                            >
+                                {data.nama}
+                            </h1>
+                            <div
+                                style={{
+                                    fontSize: 14,
+                                    color: ckColors.textMuted,
+                                    marginTop: 6,
+                                }}
+                            >
+                                {data.kode_paket} · {data.lokasi ?? '—'}
+                            </div>
+                        </header>
+
+                        <section style={{ marginTop: 26, maxWidth: '34ch' }}>
+                            <div
+                                style={{
+                                    fontSize: 13,
+                                    color: ckColors.textMuted,
+                                    fontWeight: 510,
+                                }}
+                            >
+                                Kelengkapan dokumen
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: 'clamp(36px,3.6vw,46px)',
+                                    fontWeight: 600,
+                                    letterSpacing: '-.025em',
+                                    color: ckColors.text,
+                                    marginTop: 2,
+                                    fontVariantNumeric: 'tabular-nums',
+                                }}
+                            >
+                                {kelengkapanPersen}%
+                            </div>
+                            <div
+                                style={{
+                                    fontSize: 16,
+                                    color: ckColors.textMuted,
+                                    marginTop: 8,
+                                    letterSpacing: '-.01em',
+                                }}
+                            >
+                                {dokumenWajibBelum.length > 0 ? (
+                                    <>
+                                        {dokumenWajibBelum.length} dokumen wajib
+                                        belum diunggah —{' '}
+                                        <span
+                                            style={{
+                                                color: ckColors.danger,
+                                                fontWeight: 540,
+                                            }}
+                                        >
+                                            {dokumenWajibBelum.join(', ')}
+                                        </span>
+                                        .
+                                    </>
+                                ) : (
+                                    'Semua dokumen wajib sudah lengkap.'
+                                )}
+                            </div>
+                        </section>
+
+                        <section style={{ marginTop: 26 }}>
+                            <CkCard padded>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'flex-start',
+                                        justifyContent: 'space-between',
+                                        gap: 6,
+                                    }}
+                                >
+                                    {milestones.map((m, i) => (
+                                        <Fragment key={m.key}>
+                                            <TimelineStep
+                                                label={m.label}
+                                                dateLabel={formatShortDate(
+                                                    m.date,
+                                                )}
+                                                state={stepStates[i]}
+                                            />
+                                            <TimelineConnector
+                                                state={stepStates[i]}
+                                            />
+                                        </Fragment>
+                                    ))}
+                                    <TimelineStep
+                                        label="FHO"
+                                        dateLabel="—"
+                                        state="pending"
+                                    />
+                                </div>
+                            </CkCard>
+                        </section>
+
+                        <section
+                            style={{
+                                display: 'grid',
+                                gridTemplateColumns:
+                                    'minmax(0,1fr) minmax(0,1.3fr)',
+                                gap: 26,
+                                marginTop: 30,
+                                alignItems: 'start',
+                            }}
+                        >
+                            <div>
+                                <CkSectionLabel>Informasi paket</CkSectionLabel>
+                                <CkCard>
+                                    {[
+                                        [
+                                            'Sumber dana',
+                                            data.sumber_dana ?? '—',
+                                        ],
+                                        [
+                                            'Pagu',
+                                            data.pagu !== null
+                                                ? formatCurrency(data.pagu)
+                                                : '—',
+                                        ],
+                                        [
+                                            'Nilai kontrak',
+                                            formatCurrency(data.nilai_kontrak),
+                                        ],
+                                        ['Penyedia', data.penyedia ?? '—'],
+                                        [
+                                            'Konsultan pengawas',
+                                            data.konsultan_pengawas ?? '—',
+                                        ],
+                                        ['PPK', data.ppk ?? '—'],
+                                        ['PPTK', data.pptk ?? '—'],
+                                        ['No. kontrak', data.no_kontrak ?? '—'],
+                                        [
+                                            'Masa pelaksanaan',
+                                            masaPelaksanaan ?? '—',
+                                        ],
+                                    ].map(([label, value], i) => (
+                                        <div
+                                            key={label}
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: 16,
+                                                padding: '13px 18px',
+                                                borderTop:
+                                                    i === 0
+                                                        ? undefined
+                                                        : `1px solid ${ckColors.border}`,
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    fontSize: 14,
+                                                    color: ckColors.textMuted,
+                                                    flex: 'none',
+                                                }}
+                                            >
+                                                {label}
+                                            </div>
+                                            <div
+                                                style={{
+                                                    flex: 1,
+                                                    minWidth: 0,
+                                                    textAlign: 'right',
+                                                    fontSize: 14,
+                                                    fontWeight: 510,
+                                                    color: ckColors.text,
+                                                    fontVariantNumeric:
+                                                        'tabular-nums',
+                                                }}
+                                            >
+                                                {value}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </CkCard>
+
+                                <CkSectionLabel
+                                    style={{ margin: '26px 0 8px 6px' }}
+                                >
+                                    Kurva-S paket
+                                </CkSectionLabel>
+                                <CkCard padded>
+                                    <SCurveChart
+                                        points={progresAgregat.points}
+                                    />
+                                    <div
+                                        style={{
+                                            fontSize: 13,
+                                            color: ckColors.textMuted,
+                                            marginTop: 10,
+                                        }}
+                                    >
+                                        Realisasi {progresAgregat.realisasi}%
+                                        {progresAgregat.rencana !== null && (
+                                            <>
+                                                {' '}
+                                                terhadap rencana{' '}
+                                                {progresAgregat.rencana}%
+                                            </>
+                                        )}
+                                    </div>
+                                </CkCard>
+                            </div>
+
+                            <div>
+                                <CkSectionLabel
+                                    style={{ margin: '0 0 2px 6px' }}
+                                >
+                                    Checklist dokumen per tahap
+                                </CkSectionLabel>
+                                {sections.map((sec) => (
+                                    <div
+                                        key={sec.tahap}
+                                        style={{ marginTop: 20 }}
+                                    >
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                alignItems: 'baseline',
+                                                justifyContent: 'space-between',
+                                                margin: '0 6px 8px',
+                                            }}
+                                        >
+                                            <div
+                                                style={{
+                                                    fontSize: 14,
+                                                    fontWeight: 610,
+                                                    letterSpacing: '-.01em',
+                                                    color: ckColors.text,
+                                                }}
+                                            >
+                                                {sec.tahap}
+                                            </div>
+                                            <div
+                                                style={{
+                                                    fontSize: 13,
+                                                    color: ckColors.textMuted4,
+                                                    fontVariantNumeric:
+                                                        'tabular-nums',
+                                                }}
+                                            >
+                                                {sec.done}/{sec.total}
+                                            </div>
+                                        </div>
+                                        <CkCard>
+                                            {sec.docs.map((item, i) => (
+                                                <div
+                                                    key={item.id}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    aria-pressed={
+                                                        item.status === 'ada'
+                                                    }
+                                                    onClick={() =>
+                                                        toggleDokumen(item.id)
+                                                    }
+                                                    onKeyDown={(e) => {
+                                                        if (
+                                                            e.key === 'Enter' ||
+                                                            e.key === ' '
+                                                        ) {
+                                                            e.preventDefault();
+                                                            toggleDokumen(
+                                                                item.id,
+                                                            );
+                                                        }
+                                                    }}
+                                                    className="ck-checklist-item"
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        gap: 13,
+                                                        padding: '12.5px 18px',
+                                                        borderTop:
+                                                            i === 0
+                                                                ? undefined
+                                                                : `1px solid ${ckColors.border}`,
+                                                        cursor: 'pointer',
+                                                        opacity:
+                                                            pendingDoc ===
+                                                            item.id
+                                                                ? 0.5
+                                                                : 1,
+                                                    }}
+                                                >
+                                                    {item.status === 'ada' ? (
+                                                        <span
+                                                            style={{
+                                                                width: 19,
+                                                                height: 19,
+                                                                borderRadius:
+                                                                    '50%',
+                                                                background:
+                                                                    ckColors.accent,
+                                                                display: 'flex',
+                                                                alignItems:
+                                                                    'center',
+                                                                justifyContent:
+                                                                    'center',
+                                                                flex: 'none',
+                                                            }}
+                                                        >
+                                                            <svg
+                                                                width="11"
+                                                                height="11"
+                                                                viewBox="0 0 12 12"
+                                                                fill="none"
+                                                                stroke="#fff"
+                                                                strokeWidth="2"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                            >
+                                                                <path d="M2.5 6.3l2.3 2.3L9.5 3.7" />
+                                                            </svg>
+                                                        </span>
+                                                    ) : (
+                                                        <span
+                                                            style={{
+                                                                width: 19,
+                                                                height: 19,
+                                                                borderRadius:
+                                                                    '50%',
+                                                                border: item.wajib
+                                                                    ? `2px solid ${ckColors.danger}`
+                                                                    : '1.5px solid #D3D1CB',
+                                                                flex: 'none',
+                                                                boxSizing:
+                                                                    'border-box',
+                                                            }}
+                                                        />
+                                                    )}
+                                                    <div
+                                                        style={{
+                                                            flex: 1,
+                                                            minWidth: 0,
+                                                            fontSize: 14.5,
+                                                            color: ckColors.text,
+                                                        }}
+                                                    >
+                                                        {item.nama}
+                                                    </div>
+                                                    {item.status ===
+                                                        'belum' && (
+                                                        <div
+                                                            style={{
+                                                                fontSize: 13,
+                                                                fontWeight: 520,
+                                                                whiteSpace:
+                                                                    'nowrap',
+                                                                color: item.wajib
+                                                                    ? ckColors.danger
+                                                                    : ckColors.textMuted6,
+                                                            }}
+                                                        >
+                                                            {item.wajib
+                                                                ? 'Wajib · belum'
+                                                                : 'Belum'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </CkCard>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+
+                        <div style={{ marginTop: 30 }}>
+                            <Link
+                                href={index()}
+                                className="ck-link-accent"
+                                style={{
+                                    fontSize: 14,
+                                    color: ckColors.textMuted,
+                                }}
+                            >
+                                ← Kembali ke Data Paket
+                            </Link>
+                        </div>
                     </div>
-                </div>
-
-                <Card>
-                    <CardContent>
-                        <dl>
-                            <Baris label="Status">
-                                <PaketStatusBadge status={paket.status} />
-                            </Baris>
-
-                            <Baris label="Nilai Kontrak">
-                                {formatCurrency(paket.nilai_kontrak)}
-                            </Baris>
-
-                            <Baris label="Progres">{paket.progres}%</Baris>
-
-                            <Baris label="Lokasi">{paket.lokasi ?? '-'}</Baris>
-
-                            <Baris label="Penyedia">
-                                {paket.penyedia ?? '-'}
-                            </Baris>
-
-                            <Baris label="Tanggal Mulai">
-                                {formatDate(paket.tanggal_mulai)}
-                            </Baris>
-
-                            <Baris label="Tanggal Selesai">
-                                {formatDate(paket.tanggal_selesai)}
-                            </Baris>
-
-                            <Baris label="Keterangan">
-                                {paket.keterangan ?? '-'}
-                            </Baris>
-                        </dl>
-                    </CardContent>
-                </Card>
-
-                <div>
-                    <Button variant="outline" asChild>
-                        <Link href={index()}>Kembali ke Data Paket</Link>
-                    </Button>
-                </div>
+                </main>
             </div>
         </>
     );
 }
-
-PaketShow.layout = {
-    breadcrumbs: [
-        { title: 'Dashboard', href: dashboard() },
-        { title: 'Data Paket', href: index() },
-        { title: 'Detail Paket', href: '#' },
-    ],
-};

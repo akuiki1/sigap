@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Paket;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -40,10 +41,7 @@ class DashboardTest extends TestCase
             ->assertInertia(
                 fn (AssertableInertia $page) => $page
                     ->component('dashboard')
-                    ->where('stats.total_paket', 6)
-                    ->where('stats.proyek_aktif', 3)
-                    ->where('stats.selesai', 2)
-                    ->where('stats.menunggu_audit', 1)
+                    ->where('stats.paket_aktif', 3)
             );
     }
 
@@ -55,19 +53,23 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertInertia(
                 fn (AssertableInertia $page) => $page
-                    ->where('stats.total_paket', 0)
-                    ->where('stats.proyek_aktif', 0)
-                    ->has('pakets', 0)
+                    ->where('stats.paket_aktif', 0)
+                    ->where('stats.dokumen_belum_lengkap', 0)
+                    ->has('packages', 0)
             );
     }
 
-    public function test_only_the_five_most_recent_pakets_are_listed(): void
+    public function test_packages_list_is_scoped_to_the_current_tahun_anggaran(): void
     {
         $this->actingAs(User::factory()->create());
-        Paket::factory()->count(8)->create();
+
+        $tahunIni = Carbon::now()->year;
+
+        Paket::factory()->count(2)->create(['tahun_anggaran' => $tahunIni]);
+        Paket::factory()->create(['tahun_anggaran' => $tahunIni - 1]);
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->has('pakets', 5));
+            ->assertInertia(fn (AssertableInertia $page) => $page->has('packages', 2));
     }
 }

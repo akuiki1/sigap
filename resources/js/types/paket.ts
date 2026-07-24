@@ -6,12 +6,22 @@ export type Paket = {
     nama: string;
     lokasi: string | null;
     penyedia: string | null;
+    sumber_dana: string | null;
     nilai_kontrak: number;
+    pagu: number | null;
     progres: number;
     status: StatusPaket;
+    no_kontrak: string | null;
+    konsultan_pengawas: string | null;
+    ppk: string | null;
+    pptk: string | null;
     tahun_anggaran: number;
     tanggal_mulai: string | null;
     tanggal_selesai: string | null;
+    tanggal_kontrak: string | null;
+    tanggal_spmk: string | null;
+    tanggal_mc0: string | null;
+    tanggal_pho_rencana: string | null;
     keterangan: string | null;
     created_at: string | null;
     updated_at: string | null;
@@ -20,6 +30,71 @@ export type Paket = {
 export type StatusOption = {
     value: StatusPaket;
     label: string;
+};
+
+export type StatusDokumen = 'ada' | 'belum';
+
+/** Satu baris checklist dokumen dalam konteks realisasi sebuah paket. */
+export type DokumenChecklistItem = {
+    id: number;
+    nama: string;
+    status: StatusDokumen;
+    wajib: boolean;
+};
+
+/** Satu tahap ("Persiapan & anggaran", dst.) beserta checklist dokumennya. */
+export type ChecklistSection = {
+    tahap: string;
+    done: number;
+    total: number;
+    docs: DokumenChecklistItem[];
+};
+
+export type FollowupTone = 'warn' | 'danger';
+
+export type FollowupItem = {
+    paket_id: number;
+    text: string;
+    pkg: string;
+    meta: string;
+    tone: FollowupTone;
+};
+
+export type DashboardPackageRow = {
+    id: number;
+    nama: string;
+    penyedia: string | null;
+    nilai_kontrak: number;
+    status_label: string;
+    progres: number;
+    flag: FollowupTone | null;
+};
+
+export type ProgresAgregatPoint = {
+    label: string;
+    realisasi: number | null;
+    rencana: number;
+};
+
+export type ProgresAgregat = {
+    points: ProgresAgregatPoint[];
+    realisasi: number;
+    rencana: number | null;
+    deviasi: number | null;
+};
+
+export type TenggatItem = {
+    paket_id: number;
+    title: string;
+    pkg: string;
+    hari: number;
+};
+
+export type DashboardStats = {
+    paket_aktif: number;
+    kesiapan_audit_persen: number;
+    dokumen_belum_lengkap: number;
+    menuju_pho: number;
 };
 
 /**

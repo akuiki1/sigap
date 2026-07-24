@@ -112,7 +112,35 @@ export function PaketForm({
                         </div>
                     </div>
 
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="grid gap-2">
+                            <Label htmlFor="sumber_dana">Sumber Dana</Label>
+
+                            <Input
+                                id="sumber_dana"
+                                name="sumber_dana"
+                                defaultValue={paket?.sumber_dana ?? ''}
+                                placeholder="DAU 2026"
+                            />
+
+                            <InputError message={errors.sumber_dana} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="no_kontrak">No. Kontrak</Label>
+
+                            <Input
+                                id="no_kontrak"
+                                name="no_kontrak"
+                                defaultValue={paket?.no_kontrak ?? ''}
+                                placeholder="602/012/CK/2026"
+                            />
+
+                            <InputError message={errors.no_kontrak} />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="nilai_kontrak">
                                 Nilai Kontrak (Rp)
@@ -131,6 +159,24 @@ export function PaketForm({
                             <InputError message={errors.nilai_kontrak} />
                         </div>
 
+                        <div className="grid gap-2">
+                            <Label htmlFor="pagu">Pagu (Rp)</Label>
+
+                            <Input
+                                id="pagu"
+                                name="pagu"
+                                type="number"
+                                min={0}
+                                step={1}
+                                defaultValue={paket?.pagu ?? ''}
+                                placeholder="Plafon RUP/DPA, boleh dikosongkan"
+                            />
+
+                            <InputError message={errors.pagu} />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="progres">Progres (%)</Label>
 
@@ -174,6 +220,48 @@ export function PaketForm({
                         </div>
                     </div>
 
+                    <div className="grid gap-4 sm:grid-cols-3">
+                        <div className="grid gap-2">
+                            <Label htmlFor="konsultan_pengawas">
+                                Konsultan Pengawas
+                            </Label>
+
+                            <Input
+                                id="konsultan_pengawas"
+                                name="konsultan_pengawas"
+                                defaultValue={paket?.konsultan_pengawas ?? ''}
+                                placeholder="CV Rancang Banua"
+                            />
+
+                            <InputError message={errors.konsultan_pengawas} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="ppk">PPK</Label>
+
+                            <Input
+                                id="ppk"
+                                name="ppk"
+                                defaultValue={paket?.ppk ?? ''}
+                                placeholder="H. Ahmad Fauzi, ST"
+                            />
+
+                            <InputError message={errors.ppk} />
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="pptk">PPTK</Label>
+
+                            <Input
+                                id="pptk"
+                                name="pptk"
+                                defaultValue={paket?.pptk ?? ''}
+                            />
+
+                            <InputError message={errors.pptk} />
+                        </div>
+                    </div>
+
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="tanggal_mulai">Tanggal Mulai</Label>
@@ -201,6 +289,79 @@ export function PaketForm({
                             />
 
                             <InputError message={errors.tanggal_selesai} />
+                        </div>
+                    </div>
+
+                    <div className="grid gap-2">
+                        <p className="text-sm text-muted-foreground">
+                            Tanggal tahapan administrasi — dipakai untuk
+                            linimasa & kurva-S di halaman detail paket.
+                        </p>
+
+                        <div className="grid gap-4 sm:grid-cols-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="tanggal_kontrak">
+                                    Tanggal Kontrak
+                                </Label>
+
+                                <Input
+                                    id="tanggal_kontrak"
+                                    name="tanggal_kontrak"
+                                    type="date"
+                                    defaultValue={paket?.tanggal_kontrak ?? ''}
+                                />
+
+                                <InputError message={errors.tanggal_kontrak} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="tanggal_spmk">
+                                    Tanggal SPMK
+                                </Label>
+
+                                <Input
+                                    id="tanggal_spmk"
+                                    name="tanggal_spmk"
+                                    type="date"
+                                    defaultValue={paket?.tanggal_spmk ?? ''}
+                                />
+
+                                <InputError message={errors.tanggal_spmk} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="tanggal_mc0">
+                                    Tanggal MC-0
+                                </Label>
+
+                                <Input
+                                    id="tanggal_mc0"
+                                    name="tanggal_mc0"
+                                    type="date"
+                                    defaultValue={paket?.tanggal_mc0 ?? ''}
+                                />
+
+                                <InputError message={errors.tanggal_mc0} />
+                            </div>
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="tanggal_pho_rencana">
+                                    PHO Rencana
+                                </Label>
+
+                                <Input
+                                    id="tanggal_pho_rencana"
+                                    name="tanggal_pho_rencana"
+                                    type="date"
+                                    defaultValue={
+                                        paket?.tanggal_pho_rencana ?? ''
+                                    }
+                                />
+
+                                <InputError
+                                    message={errors.tanggal_pho_rencana}
+                                />
+                            </div>
                         </div>
                     </div>
 

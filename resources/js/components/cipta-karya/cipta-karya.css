@@ -1,0 +1,25 @@
+/*
+ * Hover states untuk halaman Dashboard Cipta Karya (Ringkasan + Detail
+ * paket) — dipisah dari inline style karena React tidak punya :hover di
+ * style prop. Mockup aslinya (dc-runtime) memakai atribut "style-hover"
+ * untuk hal yang sama; ini padanannya di React biasa.
+ */
+.ck-nav-row:hover {
+    background: rgba(0, 0, 0, 0.045);
+}
+
+.ck-row:hover {
+    background: rgba(0, 0, 0, 0.025);
+}
+
+.ck-btn-accent:hover {
+    opacity: 0.9;
+}
+
+.ck-link-accent:hover {
+    opacity: 0.7;
+}
+
+.ck-checklist-item:hover {
+    background: rgba(0, 0, 0, 0.02);
+}

@@ -14,6 +14,13 @@ createInertiaApp({
         switch (true) {
             case name === 'welcome':
                 return null;
+            // Dashboard Cipta Karya (Ringkasan + Detail paket) membawa shell
+            // (sidebar, tipografi, palet) sendiri sesuai handoff desainnya —
+            // lihat resources/js/components/cipta-karya/ — jadi tidak dibungkus
+            // AppLayout/AppSidebar standar seperti halaman lain.
+            case name === 'dashboard':
+            case name === 'paket/show':
+                return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

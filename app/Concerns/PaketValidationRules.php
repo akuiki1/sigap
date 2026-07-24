@@ -26,14 +26,24 @@ trait PaketValidationRules
             'nama' => ['required', 'string', 'max:255'],
             'lokasi' => ['nullable', 'string', 'max:255'],
             'penyedia' => ['nullable', 'string', 'max:255'],
+            'sumber_dana' => ['nullable', 'string', 'max:255'],
             // Rupiah penuh tanpa sen; batas atas menjaga nilai tetap muat di
             // unsignedBigInteger sekaligus di integer PHP.
             'nilai_kontrak' => ['required', 'integer', 'min:0', 'max:999999999999999'],
+            'pagu' => ['nullable', 'integer', 'min:0', 'max:999999999999999'],
             'progres' => ['required', 'integer', 'between:0,100'],
             'status' => ['required', Rule::enum(StatusPaket::class)],
+            'no_kontrak' => ['nullable', 'string', 'max:100'],
+            'konsultan_pengawas' => ['nullable', 'string', 'max:255'],
+            'ppk' => ['nullable', 'string', 'max:255'],
+            'pptk' => ['nullable', 'string', 'max:255'],
             'tahun_anggaran' => ['required', 'integer', 'between:2000,2100'],
             'tanggal_mulai' => ['nullable', 'date'],
             'tanggal_selesai' => ['nullable', 'date', 'after_or_equal:tanggal_mulai'],
+            'tanggal_kontrak' => ['nullable', 'date'],
+            'tanggal_spmk' => ['nullable', 'date'],
+            'tanggal_mc0' => ['nullable', 'date'],
+            'tanggal_pho_rencana' => ['nullable', 'date'],
             'keterangan' => ['nullable', 'string', 'max:2000'],
         ];
     }

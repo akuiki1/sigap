@@ -20,6 +20,22 @@ export function formatCurrency(value: number): string {
 }
 
 /**
+ * Format rupiah ringkas ala "Rp 3,1 M" / "Rp 640 jt", dipakai di daftar
+ * padat (dashboard) tempat nilai penuh terlalu panjang untuk satu baris.
+ */
+export function formatCurrencyCompact(value: number): string {
+    const miliar = value / 1_000_000_000;
+
+    if (Math.abs(miliar) >= 1) {
+        return `Rp ${miliar.toLocaleString('id-ID', { maximumFractionDigits: 1 })} M`;
+    }
+
+    const juta = value / 1_000_000;
+
+    return `Rp ${juta.toLocaleString('id-ID', { maximumFractionDigits: 0 })} jt`;
+}
+
+/**
  * Format tanggal Y-m-d dari server menjadi tanggal panjang Indonesia.
  * Mengembalikan '-' bila tanggal belum diisi.
  */
