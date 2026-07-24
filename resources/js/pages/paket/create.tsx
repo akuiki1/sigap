@@ -1,11 +1,17 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import PaketController from '@/actions/App/Http/Controllers/PaketController';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
+import { PaketForm } from '@/components/paket-form';
 import { Card, CardContent } from '@/components/ui/card';
 import { dashboard } from '@/routes';
 import { create, index } from '@/routes/paket';
+import type { StatusOption } from '@/types';
 
-export default function PaketCreate() {
+export default function PaketCreate({
+    statusOptions,
+}: {
+    statusOptions: StatusOption[];
+}) {
     return (
         <>
             <Head title="Tambah Paket" />
@@ -17,14 +23,12 @@ export default function PaketCreate() {
                 />
 
                 <Card>
-                    <CardContent className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                            Form penambahan paket akan tersedia di sini.
-                        </p>
-
-                        <Button variant="outline" asChild>
-                            <Link href={index()}>Kembali ke Data Paket</Link>
-                        </Button>
+                    <CardContent>
+                        <PaketForm
+                            action={PaketController.store.form()}
+                            statusOptions={statusOptions}
+                            submitLabel="Simpan Paket"
+                        />
                     </CardContent>
                 </Card>
             </div>

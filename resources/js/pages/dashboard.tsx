@@ -1,5 +1,5 @@
-import { Head } from '@inertiajs/react';
-import { Badge } from '@/components/ui/badge';
+import { Head, Link } from '@inertiajs/react';
+import { PaketStatusBadge } from '@/components/paket-status-badge';
 import {
     Card,
     CardDescription,
@@ -16,31 +16,14 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 import { dashboard } from '@/routes';
-
-type PaketStatus = 'aktif' | 'selesai' | 'menunggu_audit' | string;
-
-type Paket = {
-    id: number;
-    nama: string;
-    nilai_kontrak: number;
-    progres: number;
-    status: PaketStatus;
-};
+import { show } from '@/routes/paket';
+import type { Paket } from '@/types';
 
 type Stats = {
     total_paket: number;
     proyek_aktif: number;
     selesai: number;
     menunggu_audit: number;
-};
-
-const statusBadge: Record<
-    string,
-    { label: string; variant: 'default' | 'success' | 'warning' }
-> = {
-    aktif: { label: 'Aktif', variant: 'default' },
-    selesai: { label: 'Selesai', variant: 'success' },
-    menunggu_audit: { label: 'Menunggu Audit', variant: 'warning' },
 };
 
 const statCards: { key: keyof Stats; label: string }[] = [
@@ -103,31 +86,29 @@ export default function Dashboard({
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                pakets.map((paket) => {
-                                    const badge = statusBadge[paket.status] ?? {
-                                        label: paket.status,
-                                        variant: 'default' as const,
-                                    };
-
-                                    return (
-                                        <TableRow key={paket.id}>
-                                            <TableCell>{paket.nama}</TableCell>
-                                            <TableCell>
-                                                {formatCurrency(
-                                                    paket.nilai_kontrak,
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {paket.progres}%
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={badge.variant}>
-                                                    {badge.label}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
+                                pakets.map((paket) => (
+                                    <TableRow key={paket.id}>
+                                        <TableCell>
+                                            <Link
+                                                href={show(paket.id)}
+                                                className="font-medium hover:underline"
+                                            >
+                                                {paket.nama}
+                                            </Link>
+                                        </TableCell>
+                                        <TableCell>
+                                            {formatCurrency(
+                                                paket.nilai_kontrak,
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{paket.progres}%</TableCell>
+                                        <TableCell>
+                                            <PaketStatusBadge
+                                                status={paket.status}
+                                            />
+                                        </TableCell>
+                                    </TableRow>
+                                ))
                             )}
                         </TableBody>
                     </Table>

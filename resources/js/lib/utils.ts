@@ -18,3 +18,17 @@ export function formatCurrency(value: number): string {
         maximumFractionDigits: 0,
     }).format(value);
 }
+
+/**
+ * Format tanggal Y-m-d dari server menjadi tanggal panjang Indonesia.
+ * Mengembalikan '-' bila tanggal belum diisi.
+ */
+export function formatDate(value: string | null): string {
+    if (!value) {
+        return '-';
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        dateStyle: 'long',
+    }).format(new Date(value));
+}

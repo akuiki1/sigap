@@ -1,6 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import Heading from '@/components/heading';
-import { Badge } from '@/components/ui/badge';
+import { PaketStatusBadge } from '@/components/paket-status-badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import {
@@ -13,17 +13,12 @@ import {
 } from '@/components/ui/table';
 import { formatCurrency } from '@/lib/utils';
 import { dashboard } from '@/routes';
-import { create, index } from '@/routes/paket';
+import { create, index, show } from '@/routes/paket';
+import type { Paginated, Paket } from '@/types';
 
-type Paket = {
-    id: number;
-    nama: string;
-    nilai_kontrak: number;
-    progres: number;
-    status: string;
-};
+export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
+    const { data, current_page, last_page, from, to, total } = pakets;
 
-export default function PaketIndex({ pakets = [] }: { pakets?: Paket[] }) {
     return (
         <>
             <Head title="Data Paket" />
@@ -44,6 +39,7 @@ export default function PaketIndex({ pakets = [] }: { pakets?: Paket[] }) {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                                <TableHead>Kode</TableHead>
                                 <TableHead>Nama Paket</TableHead>
                                 <TableHead>Nilai Kontrak</TableHead>
                                 <TableHead>Progres</TableHead>
@@ -51,19 +47,29 @@ export default function PaketIndex({ pakets = [] }: { pakets?: Paket[] }) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {pakets.length === 0 ? (
+                            {data.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={5}
                                         className="text-center text-muted-foreground"
                                     >
                                         Belum ada data paket.
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                pakets.map((paket) => (
+                                data.map((paket) => (
                                     <TableRow key={paket.id}>
-                                        <TableCell>{paket.nama}</TableCell>
+                                        <TableCell className="font-mono text-xs">
+                                            {paket.kode_paket}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Link
+                                                href={show(paket.id)}
+                                                className="font-medium hover:underline"
+                                            >
+                                                {paket.nama}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell>
                                             {formatCurrency(
                                                 paket.nilai_kontrak,
@@ -71,7 +77,9 @@ export default function PaketIndex({ pakets = [] }: { pakets?: Paket[] }) {
                                         </TableCell>
                                         <TableCell>{paket.progres}%</TableCell>
                                         <TableCell>
-                                            <Badge>{paket.status}</Badge>
+                                            <PaketStatusBadge
+                                                status={paket.status}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))
@@ -79,6 +87,48 @@ export default function PaketIndex({ pakets = [] }: { pakets?: Paket[] }) {
                         </TableBody>
                     </Table>
                 </Card>
+
+                {last_page > 1 && (
+                    <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                            Menampilkan {from ?? 0}–{to ?? 0} dari {total} paket
+                        </p>
+
+                        <div className="flex gap-2">
+                            {current_page > 1 ? (
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                        href={index({
+                                            query: { page: current_page - 1 },
+                                        })}
+                                    >
+                                        Sebelumnya
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" disabled>
+                                    Sebelumnya
+                                </Button>
+                            )}
+
+                            {current_page < last_page ? (
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link
+                                        href={index({
+                                            query: { page: current_page + 1 },
+                                        })}
+                                    >
+                                        Berikutnya
+                                    </Link>
+                                </Button>
+                            ) : (
+                                <Button variant="outline" size="sm" disabled>
+                                    Berikutnya
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
         </>
     );

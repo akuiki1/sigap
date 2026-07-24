@@ -1,30 +1,37 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
+import PaketController from '@/actions/App/Http/Controllers/PaketController';
 import Heading from '@/components/heading';
-import { Button } from '@/components/ui/button';
+import { PaketForm } from '@/components/paket-form';
 import { Card, CardContent } from '@/components/ui/card';
 import { dashboard } from '@/routes';
 import { index } from '@/routes/paket';
+import type { Paket, StatusOption } from '@/types';
 
-export default function PaketEdit() {
+export default function PaketEdit({
+    paket,
+    statusOptions,
+}: {
+    paket: Paket;
+    statusOptions: StatusOption[];
+}) {
     return (
         <>
-            <Head title="Ubah Paket" />
+            <Head title={`Ubah ${paket.kode_paket}`} />
 
             <div className="flex flex-1 flex-col gap-4 p-4">
                 <Heading
                     title="Ubah Paket"
-                    description="Form pengeditan data paket proyek gedung."
+                    description={`Memperbarui data paket ${paket.kode_paket}.`}
                 />
 
                 <Card>
-                    <CardContent className="space-y-4">
-                        <p className="text-sm text-muted-foreground">
-                            Form pengeditan paket akan tersedia di sini.
-                        </p>
-
-                        <Button variant="outline" asChild>
-                            <Link href={index()}>Kembali ke Data Paket</Link>
-                        </Button>
+                    <CardContent>
+                        <PaketForm
+                            action={PaketController.update.form(paket.id)}
+                            statusOptions={statusOptions}
+                            submitLabel="Simpan Perubahan"
+                            paket={paket}
+                        />
                     </CardContent>
                 </Card>
             </div>

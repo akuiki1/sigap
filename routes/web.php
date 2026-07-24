@@ -10,7 +10,7 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('paket', PaketController::class)->only(['index', 'create', 'show', 'edit']);
+    Route::resource('paket', PaketController::class);
 
     Route::get('audit', [AuditController::class, 'review'])->name('audit.review');
 });
