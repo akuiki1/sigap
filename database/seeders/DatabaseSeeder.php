@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class DatabaseSeeder extends Seeder
 {
@@ -129,6 +130,73 @@ class DatabaseSeeder extends Seeder
 
         foreach (array_chunk($rows, 500) as $chunk) {
             DB::table('dokumen_paket')->insert($chunk);
+        }
+
+        $this->seedBerkasContoh();
+    }
+
+    /**
+     * Beri satu berkas contoh pada tiap item checklist yang berstatus "ada".
+     *
+     * Status "ada" hanya sah bila berkasnya benar-benar ada (lihat
+     * DokumenPaketController). Tanpa ini, data contoh sendiri melanggar aturan
+     * itu: checklist tampak tercentang penuh padahal tak satu pun dokumen bisa
+     * dibuka — persis kekeliruan yang aturannya dibuat untuk mencegah.
+     *
+     * Semua baris menunjuk ke satu file placeholder yang sama; menulis ratusan
+     * file kembar tidak menambah nilai apa pun untuk data contoh.
+     */
+    private function seedBerkasContoh(): void
+    {
+        $operator = User::query()->where('email', 'operator@example.com')->first();
+        $pengawas = User::query()->where('email', 'pengawas@example.com')->first();
+
+        if ($operator === null) {
+            return;
+        }
+
+        $path = 'seed/contoh-dokumen.pdf';
+
+        if (! Storage::disk('local')->exists($path)) {
+            Storage::disk('local')->put(
+                $path,
+                "%PDF-1.4\n% Berkas contoh hasil seeding SIGAP — bukan dokumen sungguhan.\n",
+            );
+        }
+
+        $ukuran = Storage::disk('local')->size($path);
+        $now = now();
+        $rows = [];
+
+        $dokumen = DB::table('dokumen_paket')
+            ->where('status', 'ada')
+            ->pluck('id');
+
+        foreach ($dokumen as $id) {
+            // Sebagian sudah diverifikasi pengawas, sisanya masih diajukan —
+            // supaya antrean verifikasi di layar audit tidak kosong melompong.
+            $diverifikasi = $pengawas !== null && fake()->boolean(65);
+
+            $rows[] = [
+                'attachable_type' => 'dokumen_paket',
+                'attachable_id' => $id,
+                'versi' => 1,
+                'is_terkini' => true,
+                'file_path' => $path,
+                'nama_asli' => 'contoh-dokumen.pdf',
+                'ukuran' => $ukuran,
+                'mime_type' => 'application/pdf',
+                'status_verifikasi' => $diverifikasi ? 'diverifikasi' : 'diajukan',
+                'uploaded_by' => $operator->id,
+                'verified_by' => $diverifikasi ? $pengawas->id : null,
+                'verified_at' => $diverifikasi ? $now : null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        foreach (array_chunk($rows, 500) as $chunk) {
+            DB::table('berkas')->insert($chunk);
         }
     }
 }

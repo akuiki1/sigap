@@ -3,21 +3,22 @@ import { Fragment, useState } from 'react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
 import { ChecklistItemRow } from '@/components/cipta-karya/checklist-item';
 import '@/components/cipta-karya/cipta-karya.css';
+import {
+    CkButton,
+    CkDialog,
+    CkDialogClose,
+    CkDialogContent,
+    CkDialogDescription,
+    CkDialogFooter,
+    CkDialogTitle,
+    CkDialogTrigger,
+} from '@/components/cipta-karya/ck-dialog';
 import { PetaKoordinat } from '@/components/cipta-karya/peta-koordinat';
 import { CkCard, CkSectionLabel } from '@/components/cipta-karya/primitives';
 import { ProgresRiwayat } from '@/components/cipta-karya/progres-riwayat';
 import { SCurveChart } from '@/components/cipta-karya/s-curve-chart';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
 import { formatCurrency } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import paket, { edit, index } from '@/routes/paket';
@@ -169,7 +170,11 @@ export default function PaketShow({
         i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'pending',
     );
 
-    function toggleDokumen(checklistDokumenId: number) {
+    /**
+     * Kembalikan satu item checklist ke "belum". Tidak ada arah sebaliknya di
+     * sini: status "ada" hanya lahir dari unggahan berkas.
+     */
+    function batalkanTanda(checklistDokumenId: number) {
         if (!auth.user.can_input) {
             return;
         }
@@ -272,8 +277,8 @@ export default function PaketShow({
                                     )}
 
                                     {auth.user.is_admin && (
-                                        <Dialog>
-                                            <DialogTrigger asChild>
+                                        <CkDialog>
+                                            <CkDialogTrigger asChild>
                                                 <button
                                                     type="button"
                                                     style={{
@@ -288,30 +293,27 @@ export default function PaketShow({
                                                 >
                                                     Hapus
                                                 </button>
-                                            </DialogTrigger>
+                                            </CkDialogTrigger>
 
-                                            <DialogContent>
-                                                <DialogTitle>
+                                            <CkDialogContent>
+                                                <CkDialogTitle>
                                                     Hapus paket ini?
-                                                </DialogTitle>
-                                                <DialogDescription>
+                                                </CkDialogTitle>
+                                                <CkDialogDescription>
                                                     Paket {data.kode_paket} akan
                                                     dihapus permanen dan tidak
                                                     dapat dikembalikan.
-                                                </DialogDescription>
+                                                </CkDialogDescription>
 
-                                                <DialogFooter className="gap-2">
-                                                    <DialogClose asChild>
-                                                        <button
-                                                            type="button"
-                                                            className="rounded-md border px-3 py-1.5 text-sm"
-                                                        >
+                                                <CkDialogFooter>
+                                                    <CkDialogClose asChild>
+                                                        <CkButton variant="ghost">
                                                             Batal
-                                                        </button>
-                                                    </DialogClose>
+                                                        </CkButton>
+                                                    </CkDialogClose>
 
-                                                    <button
-                                                        type="button"
+                                                    <CkButton
+                                                        variant="danger"
                                                         onClick={() =>
                                                             router.delete(
                                                                 PaketController.destroy(
@@ -319,13 +321,12 @@ export default function PaketShow({
                                                                 ).url,
                                                             )
                                                         }
-                                                        className="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white"
                                                     >
                                                         Hapus Paket
-                                                    </button>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
+                                                    </CkButton>
+                                                </CkDialogFooter>
+                                            </CkDialogContent>
+                                        </CkDialog>
                                     )}
                                 </div>
                             )}
@@ -614,7 +615,9 @@ export default function PaketShow({
                                                     pending={
                                                         pendingDoc === item.id
                                                     }
-                                                    onToggle={toggleDokumen}
+                                                    onBatalkanTanda={
+                                                        batalkanTanda
+                                                    }
                                                 />
                                             ))}
                                         </CkCard>

@@ -2,18 +2,21 @@ import { router, usePage } from '@inertiajs/react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useRef, useState } from 'react';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import koordinatRoutes from '@/routes/koordinat';
 import paketRoutes from '@/routes/paket';
 import type { TitikKoordinat } from '@/types';
+import {
+    CkButton,
+    CkDialog,
+    CkDialogClose,
+    CkDialogContent,
+    CkDialogDescription,
+    CkDialogFooter,
+    CkDialogTitle,
+    CkField,
+    CkInput,
+    CkTextarea,
+} from './ck-dialog';
 import { CkCard, CkSectionLabel } from './primitives';
 import { ckColors } from './tokens';
 
@@ -25,191 +28,215 @@ import { ckColors } from './tokens';
 const PUSAT_HST: [number, number] = [-2.5836, 115.3815];
 const ZOOM_AWAL = 13;
 
-/**
- * Penanda dibuat dari SVG inline lewat divIcon, bukan ikon PNG bawaan Leaflet:
- * ikon bawaan dirujuk secara relatif dari CSS-nya sendiri sehingga rusak begitu
- * di-bundle Vite, dan cara ini sekalian membuat warnanya ikut token aksen.
- */
-const penanda = L.divIcon({
-    className: '',
-    html: `<svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 31C12 31 22 19.5 22 12A10 10 0 1 0 2 12c0 7.5 10 19 10 19Z"
-              fill="${ckColors.accent}" stroke="#fff" stroke-width="2"/>
-        <circle cx="12" cy="12" r="3.5" fill="#fff"/>
-    </svg>`,
-    iconSize: [24, 32],
-    iconAnchor: [12, 32],
-});
+/** Zoom saat melompat ke hasil pencarian — cukup dekat untuk mengenali bangunan. */
+const ZOOM_HASIL_CARI = 17;
+
+function pin(warna: string, kelas = ''): L.DivIcon {
+    // Penanda dibuat dari SVG inline lewat divIcon, bukan ikon PNG bawaan
+    // Leaflet: ikon bawaan dirujuk secara relatif dari CSS-nya sendiri sehingga
+    // rusak begitu di-bundle Vite, dan cara ini sekalian membuat warnanya ikut
+    // token aksen.
+    return L.divIcon({
+        className: kelas,
+        html: `<svg width="24" height="32" viewBox="0 0 24 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 31C12 31 22 19.5 22 12A10 10 0 1 0 2 12c0 7.5 10 19 10 19Z"
+                  fill="${warna}" stroke="#fff" stroke-width="2"/>
+            <circle cx="12" cy="12" r="3.5" fill="#fff"/>
+        </svg>`,
+        iconSize: [24, 32],
+        iconAnchor: [12, 32],
+    });
+}
+
+const penandaTersimpan = pin(ckColors.accent);
+const penandaPratinjau = pin(ckColors.warn, 'ck-penanda-pratinjau');
 
 function formatPosisi(lat: number, lng: number): string {
     return `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
 }
 
 /**
- * Isi dialog "tandai titik". Sengaja komponen tersendiri: Radix melepas isi
- * dialog saat ditutup, jadi state form otomatis tersetel ulang dari posisi klik
- * terbaru setiap kali dibuka — tanpa perlu effect penyetel ulang.
- *
- * Saat dibuka lewat tombol (tanpa klik peta), lat/long dikosongkan supaya bisa
- * diisi manual — jalur cadangan bila koordinat sudah dicatat di lapangan lewat
- * GPS ponsel.
+ * Baca isi kotak lintang/bujur menjadi posisi yang dipakai peta. Null bila
+ * salah satunya belum terisi atau di luar rentang bumi — penanda pratinjau
+ * lalu disembunyikan alih-alih melompat ke titik ngawur saat diketik separuh.
  */
-function FormTandaiTitik({
-    paketId,
-    onSelesai,
-    posisiAwal,
-}: {
-    paketId: number;
-    onSelesai: () => void;
-    posisiAwal: { lat: number; lng: number } | null;
-}) {
-    const [submitting, setSubmitting] = useState(false);
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [label, setLabel] = useState('');
-    const [latitude, setLatitude] = useState(
-        posisiAwal ? posisiAwal.lat.toFixed(7) : '',
-    );
-    const [longitude, setLongitude] = useState(
-        posisiAwal ? posisiAwal.lng.toFixed(7) : '',
-    );
-    const [keterangan, setKeterangan] = useState('');
+function bacaPosisi(
+    lat: string,
+    lng: string,
+): { lat: number; lng: number } | null {
+    const y = Number.parseFloat(lat);
+    const x = Number.parseFloat(lng);
 
-    function submit() {
-        setSubmitting(true);
-        setErrors({});
-
-        router.post(
-            paketRoutes.koordinat.store(paketId).url,
-            {
-                label,
-                latitude,
-                longitude,
-                keterangan: keterangan || null,
-            },
-            {
-                preserveScroll: true,
-                onSuccess: onSelesai,
-                onError: (e) => setErrors(e as Record<string, string>),
-                onFinish: () => setSubmitting(false),
-            },
-        );
+    if (!Number.isFinite(y) || !Number.isFinite(x)) {
+        return null;
     }
 
-    const inputClass =
-        'mt-1 block w-full rounded-md border px-2 py-1.5 text-sm';
+    if (Math.abs(y) > 90 || Math.abs(x) > 180) {
+        return null;
+    }
+
+    return { lat: y, lng: x };
+}
+
+type HasilCari = {
+    nama: string;
+    lat: number;
+    lng: number;
+};
+
+/**
+ * Pencarian lokasi lewat Nominatim (layanan geocoding resmi OpenStreetMap):
+ * gratis dan tanpa API key, sejalan dengan alasan memilih tile OSM. Pencarian
+ * hanya jalan saat ditekan/Enter — bukan tiap ketikan — karena kebijakan
+ * pemakaian Nominatim membatasi satu permintaan per detik.
+ */
+function KotakCari({ onPilih }: { onPilih: (hasil: HasilCari) => void }) {
+    const [kata, setKata] = useState('');
+    const [hasil, setHasil] = useState<HasilCari[] | null>(null);
+    const [mencari, setMencari] = useState(false);
+    const [galat, setGalat] = useState<string | null>(null);
+
+    async function cari() {
+        const q = kata.trim();
+
+        if (q === '') {
+            return;
+        }
+
+        setMencari(true);
+        setGalat(null);
+        setHasil(null);
+
+        try {
+            const url = new URL('https://nominatim.openstreetmap.org/search');
+            url.searchParams.set('format', 'jsonv2');
+            url.searchParams.set('limit', '6');
+            url.searchParams.set('countrycodes', 'id');
+            url.searchParams.set('q', q);
+
+            const respons = await fetch(url, {
+                headers: { 'Accept-Language': 'id' },
+            });
+
+            if (!respons.ok) {
+                throw new Error(String(respons.status));
+            }
+
+            const data: { display_name: string; lat: string; lon: string }[] =
+                await respons.json();
+
+            setHasil(
+                data.map((d) => ({
+                    nama: d.display_name,
+                    lat: Number.parseFloat(d.lat),
+                    lng: Number.parseFloat(d.lon),
+                })),
+            );
+        } catch {
+            setGalat('Pencarian gagal — periksa koneksi, lalu coba lagi.');
+        } finally {
+            setMencari(false);
+        }
+    }
 
     return (
-        <>
-            <DialogTitle>Tandai titik koordinat</DialogTitle>
-            <DialogDescription>
-                Klik peta untuk mengambil posisi, atau isi lintang & bujur
-                langsung bila koordinatnya sudah dicatat di lapangan.
-            </DialogDescription>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                <label style={{ fontSize: 13, color: ckColors.textMuted }}>
-                    Label titik
-                    <input
-                        value={label}
-                        onChange={(e) => setLabel(e.target.value)}
-                        className={inputClass}
-                        placeholder="Mis. Gedung utama"
-                    />
-                    {errors.label && (
-                        <span style={{ color: ckColors.danger, fontSize: 12 }}>
-                            {errors.label}
-                        </span>
-                    )}
-                </label>
-
-                <div style={{ display: 'flex', gap: 10 }}>
-                    <label
-                        style={{
-                            fontSize: 13,
-                            color: ckColors.textMuted,
-                            flex: 1,
-                        }}
-                    >
-                        Lintang (latitude)
-                        <input
-                            value={latitude}
-                            onChange={(e) => setLatitude(e.target.value)}
-                            inputMode="decimal"
-                            className={inputClass}
-                            placeholder="-2.5836421"
-                        />
-                        {errors.latitude && (
-                            <span
-                                style={{
-                                    color: ckColors.danger,
-                                    fontSize: 12,
-                                }}
-                            >
-                                {errors.latitude}
-                            </span>
-                        )}
-                    </label>
-
-                    <label
-                        style={{
-                            fontSize: 13,
-                            color: ckColors.textMuted,
-                            flex: 1,
-                        }}
-                    >
-                        Bujur (longitude)
-                        <input
-                            value={longitude}
-                            onChange={(e) => setLongitude(e.target.value)}
-                            inputMode="decimal"
-                            className={inputClass}
-                            placeholder="115.3814752"
-                        />
-                        {errors.longitude && (
-                            <span
-                                style={{
-                                    color: ckColors.danger,
-                                    fontSize: 12,
-                                }}
-                            >
-                                {errors.longitude}
-                            </span>
-                        )}
-                    </label>
-                </div>
-
-                <label style={{ fontSize: 13, color: ckColors.textMuted }}>
-                    Keterangan (opsional)
-                    <Textarea
-                        value={keterangan}
-                        onChange={(e) => setKeterangan(e.target.value)}
-                        rows={2}
-                        className="mt-1"
-                        placeholder="Mis. Titik diambil di depan pintu masuk."
-                    />
-                </label>
+        <div style={{ position: 'relative' }}>
+            <div
+                style={{
+                    display: 'flex',
+                    gap: 8,
+                    padding: '11px 18px',
+                    borderTop: `1px solid ${ckColors.border}`,
+                }}
+            >
+                <CkInput
+                    value={kata}
+                    onChange={(e) => setKata(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            void cari();
+                        }
+                    }}
+                    placeholder="Cari lokasi — mis. Barabai, Hulu Sungai Tengah"
+                    style={{ flex: 1 }}
+                />
+                <CkButton
+                    variant="ghost"
+                    onClick={() => void cari()}
+                    disabled={mencari || kata.trim() === ''}
+                    style={{ flex: 'none' }}
+                >
+                    {mencari ? 'Mencari…' : 'Cari'}
+                </CkButton>
             </div>
 
-            <DialogFooter className="gap-2">
-                <DialogClose asChild>
-                    <button
-                        type="button"
-                        className="rounded-md border px-3 py-1.5 text-sm"
-                    >
-                        Batal
-                    </button>
-                </DialogClose>
-                <button
-                    type="button"
-                    disabled={submitting}
-                    onClick={submit}
-                    className="rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-60"
-                    style={{ background: ckColors.accent }}
+            {galat && (
+                <div
+                    style={{
+                        padding: '0 18px 10px',
+                        fontSize: 12.5,
+                        color: ckColors.danger,
+                    }}
                 >
-                    {submitting ? 'Menyimpan…' : 'Simpan'}
-                </button>
-            </DialogFooter>
-        </>
+                    {galat}
+                </div>
+            )}
+
+            {hasil !== null && (
+                <div style={{ padding: '0 18px 10px' }}>
+                    {hasil.length === 0 ? (
+                        <div
+                            style={{
+                                fontSize: 12.5,
+                                color: ckColors.textMuted,
+                            }}
+                        >
+                            Lokasi tidak ditemukan. Coba kata kunci lain, atau
+                            klik langsung di peta.
+                        </div>
+                    ) : (
+                        <div
+                            style={{
+                                border: `1px solid ${ckColors.border}`,
+                                borderRadius: 10,
+                                overflow: 'hidden',
+                            }}
+                        >
+                            {hasil.map((h, i) => (
+                                <button
+                                    key={`${h.lat},${h.lng}`}
+                                    type="button"
+                                    className="ck-row"
+                                    onClick={() => {
+                                        onPilih(h);
+                                        setHasil(null);
+                                    }}
+                                    style={{
+                                        display: 'block',
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        padding: '9px 12px',
+                                        fontSize: 13,
+                                        color: ckColors.text,
+                                        background: 'none',
+                                        border: 'none',
+                                        borderTop:
+                                            i === 0
+                                                ? undefined
+                                                : `1px solid ${ckColors.border}`,
+                                        cursor: 'pointer',
+                                        font: 'inherit',
+                                    }}
+                                >
+                                    {h.nama}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
     );
 }
 
@@ -294,6 +321,7 @@ function TitikRow({
                 <button
                     type="button"
                     onClick={() => setHapusOpen(true)}
+                    className="ck-link-accent"
                     style={{
                         fontSize: 12.5,
                         fontWeight: 560,
@@ -309,24 +337,19 @@ function TitikRow({
                 </button>
             )}
 
-            <Dialog open={hapusOpen} onOpenChange={setHapusOpen}>
-                <DialogContent>
-                    <DialogTitle>Hapus titik ini?</DialogTitle>
-                    <DialogDescription>
+            <CkDialog open={hapusOpen} onOpenChange={setHapusOpen}>
+                <CkDialogContent>
+                    <CkDialogTitle>Hapus titik ini?</CkDialogTitle>
+                    <CkDialogDescription>
                         Titik “{titik.label}” akan dihapus dari peta paket ini.
-                    </DialogDescription>
+                    </CkDialogDescription>
 
-                    <DialogFooter className="gap-2">
-                        <DialogClose asChild>
-                            <button
-                                type="button"
-                                className="rounded-md border px-3 py-1.5 text-sm"
-                            >
-                                Batal
-                            </button>
-                        </DialogClose>
-                        <button
-                            type="button"
+                    <CkDialogFooter>
+                        <CkDialogClose asChild>
+                            <CkButton variant="ghost">Batal</CkButton>
+                        </CkDialogClose>
+                        <CkButton
+                            variant="danger"
                             disabled={deleting}
                             onClick={() => {
                                 setDeleting(true);
@@ -339,13 +362,12 @@ function TitikRow({
                                     },
                                 );
                             }}
-                            className="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white disabled:opacity-60"
                         >
                             Hapus titik
-                        </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </CkButton>
+                    </CkDialogFooter>
+                </CkDialogContent>
+            </CkDialog>
         </div>
     );
 }
@@ -365,12 +387,39 @@ export function PetaKoordinat({
     const containerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<L.Map | null>(null);
     const markerLayerRef = useRef<L.LayerGroup | null>(null);
+    const pratinjauRef = useRef<L.Marker | null>(null);
 
-    const [tandaiOpen, setTandaiOpen] = useState(false);
-    const [posisiKlik, setPosisiKlik] = useState<{
-        lat: number;
-        lng: number;
-    } | null>(null);
+    // Formulir titik baru hidup langsung di bawah peta, bukan di dalam modal:
+    // penandanya harus tetap terlihat & bisa digeser sambil label diisi.
+    const [formOpen, setFormOpen] = useState(false);
+    const [label, setLabel] = useState('');
+    const [keterangan, setKeterangan] = useState('');
+    const [latText, setLatText] = useState('');
+    const [lngText, setLngText] = useState('');
+    const [errors, setErrors] = useState<Record<string, string>>({});
+    const [submitting, setSubmitting] = useState(false);
+
+    const posisi = bacaPosisi(latText, lngText);
+
+    // Dipecah jadi angka biasa supaya effect penanda pratinjau bergantung pada
+    // nilai, bukan pada objek baru yang lahir tiap render.
+    const posLat = posisi?.lat ?? null;
+    const posLng = posisi?.lng ?? null;
+
+    function pilihPosisi(lat: number, lng: number) {
+        setLatText(lat.toFixed(7));
+        setLngText(lng.toFixed(7));
+        setFormOpen(true);
+    }
+
+    function tutupForm() {
+        setFormOpen(false);
+        setLabel('');
+        setKeterangan('');
+        setLatText('');
+        setLngText('');
+        setErrors({});
+    }
 
     // Inisialisasi peta sekali seumur komponen. Leaflet memegang DOM-nya
     // sendiri, jadi tidak boleh ikut dirender ulang React.
@@ -397,12 +446,12 @@ export function PetaKoordinat({
             map.remove();
             mapRef.current = null;
             markerLayerRef.current = null;
+            pratinjauRef.current = null;
         };
     }, []);
 
-    // Klik peta membuka dialog dengan lat/long terisi. Handler dipasang di
-    // effect terpisah karena bergantung pada hak akses, sementara peta itu
-    // sendiri hanya dibuat sekali.
+    // Klik peta memilih posisi. Handler dipasang di effect terpisah karena
+    // bergantung pada hak akses, sementara peta itu sendiri hanya dibuat sekali.
     useEffect(() => {
         const map = mapRef.current;
 
@@ -411,8 +460,7 @@ export function PetaKoordinat({
         }
 
         function onClick(e: L.LeafletMouseEvent) {
-            setPosisiKlik({ lat: e.latlng.lat, lng: e.latlng.lng });
-            setTandaiOpen(true);
+            pilihPosisi(e.latlng.lat, e.latlng.lng);
         }
 
         map.on('click', onClick);
@@ -422,7 +470,7 @@ export function PetaKoordinat({
         };
     }, [canInput]);
 
-    // Sinkronkan penanda tiap kali daftar titik berubah (tambah/hapus).
+    // Sinkronkan penanda titik tersimpan tiap kali daftarnya berubah.
     useEffect(() => {
         const map = mapRef.current;
         const layer = markerLayerRef.current;
@@ -434,20 +482,87 @@ export function PetaKoordinat({
         layer.clearLayers();
 
         titik.forEach((t) => {
-            L.marker([t.latitude, t.longitude], { icon: penanda })
+            L.marker([t.latitude, t.longitude], { icon: penandaTersimpan })
                 .bindPopup(
                     `<strong>${t.label}</strong><br>${formatPosisi(t.latitude, t.longitude)}`,
                 )
                 .addTo(layer);
         });
-
-        if (titik.length > 0) {
-            map.fitBounds(
-                L.latLngBounds(titik.map((t) => [t.latitude, t.longitude])),
-                { padding: [40, 40], maxZoom: 17 },
-            );
-        }
     }, [titik]);
+
+    // Bingkai peta ke seluruh titik hanya saat daftarnya berubah — sengaja
+    // tidak ikut posisi pratinjau, supaya peta tidak melompat sendiri sewaktu
+    // penanda digeser atau lat/long diketik manual.
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (!map || titik.length === 0) {
+            return;
+        }
+
+        map.fitBounds(
+            L.latLngBounds(titik.map((t) => [t.latitude, t.longitude])),
+            { padding: [40, 40], maxZoom: 17 },
+        );
+    }, [titik]);
+
+    // Penanda pratinjau: muncul begitu posisi dipilih, bisa digeser untuk
+    // menghaluskan letaknya, dan hilang saat form ditutup.
+    useEffect(() => {
+        const map = mapRef.current;
+
+        if (!map) {
+            return;
+        }
+
+        if (!formOpen || posLat === null || posLng === null) {
+            pratinjauRef.current?.remove();
+            pratinjauRef.current = null;
+
+            return;
+        }
+
+        if (!pratinjauRef.current) {
+            const marker = L.marker([posLat, posLng], {
+                icon: penandaPratinjau,
+                draggable: true,
+                zIndexOffset: 1000,
+            }).addTo(map);
+
+            marker.on('dragend', () => {
+                const p = marker.getLatLng();
+                setLatText(p.lat.toFixed(7));
+                setLngText(p.lng.toFixed(7));
+            });
+
+            pratinjauRef.current = marker;
+
+            return;
+        }
+
+        pratinjauRef.current.setLatLng([posLat, posLng]);
+    }, [formOpen, posLat, posLng]);
+
+    function simpan() {
+        setSubmitting(true);
+        setErrors({});
+
+        router.post(
+            paketRoutes.koordinat.store(paketId).url,
+            {
+                label,
+                latitude: latText,
+                longitude: lngText,
+                keterangan: keterangan || null,
+            },
+            {
+                preserveScroll: true,
+                onSuccess: tutupForm,
+                onError: (e) => setErrors(e as Record<string, string>),
+                onFinish: () => setSubmitting(false),
+            },
+        );
+    }
 
     function sorot(t: TitikKoordinat) {
         mapRef.current?.setView([t.latitude, t.longitude], 18);
@@ -466,13 +581,11 @@ export function PetaKoordinat({
                 <CkSectionLabel style={{ margin: 0 }}>
                     Lokasi & titik koordinat
                 </CkSectionLabel>
-                {canInput && (
+                {canInput && !formOpen && (
                     <button
                         type="button"
-                        onClick={() => {
-                            setPosisiKlik(null);
-                            setTandaiOpen(true);
-                        }}
+                        onClick={() => setFormOpen(true)}
+                        className="ck-link-accent"
                         style={{
                             fontSize: 12.5,
                             fontWeight: 560,
@@ -492,7 +605,6 @@ export function PetaKoordinat({
                 <div
                     style={{
                         padding: '13px 18px',
-                        borderBottom: `1px solid ${ckColors.border}`,
                         fontSize: 14,
                         color: alamat ? ckColors.text : ckColors.textMuted,
                     }}
@@ -500,12 +612,23 @@ export function PetaKoordinat({
                     {alamat ?? 'Alamat gedung belum diisi.'}
                 </div>
 
+                {canInput && (
+                    <KotakCari
+                        onPilih={(h) =>
+                            mapRef.current?.flyTo(
+                                [h.lat, h.lng],
+                                ZOOM_HASIL_CARI,
+                            )
+                        }
+                    />
+                )}
+
                 <div
                     ref={containerRef}
-                    style={{ height: 340, width: '100%', zIndex: 0 }}
+                    style={{ height: 360, width: '100%', zIndex: 0 }}
                 />
 
-                {canInput && (
+                {canInput && !formOpen && (
                     <div
                         style={{
                             padding: '10px 18px',
@@ -514,7 +637,130 @@ export function PetaKoordinat({
                             borderTop: `1px solid ${ckColors.border}`,
                         }}
                     >
-                        Klik di peta untuk menandai titik baru.
+                        Klik di peta untuk memilih titik, atau cari lokasinya
+                        dulu di kotak pencarian.
+                    </div>
+                )}
+
+                {canInput && formOpen && (
+                    <div
+                        style={{
+                            padding: '15px 18px 17px',
+                            borderTop: `1px solid ${ckColors.border}`,
+                            background: 'rgba(0,102,179,.035)',
+                        }}
+                    >
+                        <div
+                            style={{
+                                fontSize: 13,
+                                fontWeight: 570,
+                                color: ckColors.text,
+                                marginBottom: 3,
+                            }}
+                        >
+                            Titik baru
+                        </div>
+                        <div
+                            style={{
+                                fontSize: 12.5,
+                                color: ckColors.textMuted,
+                                marginBottom: 12,
+                            }}
+                        >
+                            {posisi
+                                ? 'Geser penanda oranye di peta untuk menghaluskan letaknya, atau ubah angkanya langsung.'
+                                : 'Klik di peta untuk memilih posisi, atau ketik lintang & bujur bila sudah dicatat dari GPS di lapangan.'}
+                        </div>
+
+                        <div
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 12,
+                            }}
+                        >
+                            <div
+                                style={{
+                                    display: 'grid',
+                                    gridTemplateColumns:
+                                        'minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)',
+                                    gap: 12,
+                                }}
+                            >
+                                <CkField
+                                    label="Label titik"
+                                    error={errors.label}
+                                >
+                                    <CkInput
+                                        value={label}
+                                        onChange={(e) =>
+                                            setLabel(e.target.value)
+                                        }
+                                        placeholder="Mis. Gedung utama"
+                                    />
+                                </CkField>
+
+                                <CkField
+                                    label="Lintang (latitude)"
+                                    error={errors.latitude}
+                                >
+                                    <CkInput
+                                        value={latText}
+                                        onChange={(e) =>
+                                            setLatText(e.target.value)
+                                        }
+                                        inputMode="decimal"
+                                        placeholder="-2.5836421"
+                                        style={{
+                                            fontVariantNumeric: 'tabular-nums',
+                                        }}
+                                    />
+                                </CkField>
+
+                                <CkField
+                                    label="Bujur (longitude)"
+                                    error={errors.longitude}
+                                >
+                                    <CkInput
+                                        value={lngText}
+                                        onChange={(e) =>
+                                            setLngText(e.target.value)
+                                        }
+                                        inputMode="decimal"
+                                        placeholder="115.3814752"
+                                        style={{
+                                            fontVariantNumeric: 'tabular-nums',
+                                        }}
+                                    />
+                                </CkField>
+                            </div>
+
+                            <CkField
+                                label="Keterangan (opsional)"
+                                error={errors.keterangan}
+                            >
+                                <CkTextarea
+                                    value={keterangan}
+                                    onChange={(e) =>
+                                        setKeterangan(e.target.value)
+                                    }
+                                    rows={2}
+                                    placeholder="Mis. Titik diambil di depan pintu masuk."
+                                />
+                            </CkField>
+
+                            <div style={{ display: 'flex', gap: 9 }}>
+                                <CkButton
+                                    onClick={simpan}
+                                    disabled={submitting || !posisi}
+                                >
+                                    {submitting ? 'Menyimpan…' : 'Simpan titik'}
+                                </CkButton>
+                                <CkButton variant="ghost" onClick={tutupForm}>
+                                    Batal
+                                </CkButton>
+                            </div>
+                        </div>
                     </div>
                 )}
 
@@ -541,16 +787,6 @@ export function PetaKoordinat({
                     ))
                 )}
             </CkCard>
-
-            <Dialog open={tandaiOpen} onOpenChange={setTandaiOpen}>
-                <DialogContent>
-                    <FormTandaiTitik
-                        paketId={paketId}
-                        posisiAwal={posisiKlik}
-                        onSelesai={() => setTandaiOpen(false)}
-                    />
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

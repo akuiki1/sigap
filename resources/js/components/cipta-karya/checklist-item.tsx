@@ -1,18 +1,22 @@
 import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { formatFileSize } from '@/lib/utils';
 import berkasRoutes from '@/routes/berkas';
 import paket from '@/routes/paket';
 import type { DokumenChecklistItem } from '@/types';
+import {
+    CkButton,
+    CkDialog,
+    CkDialogBody,
+    CkDialogClose,
+    CkDialogContent,
+    CkDialogDescription,
+    CkDialogFooter,
+    CkDialogTitle,
+    CkField,
+    CkFileInput,
+    CkTextarea,
+} from './ck-dialog';
 import { VerifikasiBadge } from './primitives';
 import { ckColors } from './tokens';
 
@@ -23,7 +27,7 @@ export function ChecklistItemRow({
     canInput,
     canVerify,
     pending,
-    onToggle,
+    onBatalkanTanda,
 }: {
     paketId: number;
     item: DokumenChecklistItem;
@@ -31,7 +35,7 @@ export function ChecklistItemRow({
     canInput: boolean;
     canVerify: boolean;
     pending: boolean;
-    onToggle: (checklistDokumenId: number) => void;
+    onBatalkanTanda: (checklistDokumenId: number) => void;
 }) {
     const [uploadOpen, setUploadOpen] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -42,7 +46,6 @@ export function ChecklistItemRow({
     const fileInput = useRef<HTMLInputElement>(null);
 
     const berkas = item.berkas;
-    const clickable = canInput && !berkas;
 
     function submitUpload() {
         const file = fileInput.current?.files?.[0];
@@ -55,8 +58,10 @@ export function ChecklistItemRow({
         setUploadError(null);
 
         router.post(
-            paket.dokumen.berkas.store({ paket: paketId, checklistDokumen: item.id })
-                .url,
+            paket.dokumen.berkas.store({
+                paket: paketId,
+                checklistDokumen: item.id,
+            }).url,
             { file },
             {
                 forceFormData: true,
@@ -94,26 +99,10 @@ export function ChecklistItemRow({
             }}
         >
             <div
-                role={clickable ? 'button' : undefined}
-                tabIndex={clickable ? 0 : undefined}
-                aria-pressed={clickable ? item.status === 'ada' : undefined}
-                onClick={clickable ? () => onToggle(item.id) : undefined}
-                onKeyDown={
-                    clickable
-                        ? (e) => {
-                              if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  onToggle(item.id);
-                              }
-                          }
-                        : undefined
-                }
-                className={clickable ? 'ck-checklist-item' : undefined}
                 style={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 13,
-                    cursor: clickable ? 'pointer' : 'default',
                     opacity: pending ? 0.5 : 1,
                 }}
             >
@@ -181,13 +170,31 @@ export function ChecklistItemRow({
                         {item.wajib ? 'Wajib · belum' : 'Belum'}
                     </div>
                 )}
+                {canInput && item.status === 'ada' && (
+                    <button
+                        type="button"
+                        onClick={() => onBatalkanTanda(item.id)}
+                        disabled={pending}
+                        className="ck-link-accent"
+                        style={{
+                            fontSize: 12.5,
+                            fontWeight: 560,
+                            color: ckColors.textMuted,
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: 0,
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        Batalkan tanda
+                    </button>
+                )}
+
                 {canInput && (
                     <button
                         type="button"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            setUploadOpen(true);
-                        }}
+                        onClick={() => setUploadOpen(true)}
                         className="ck-link-accent"
                         style={{
                             fontSize: 12.5,
@@ -233,7 +240,9 @@ export function ChecklistItemRow({
                         >
                             {berkas.nama_asli}
                         </a>
-                        <span style={{ fontSize: 12, color: ckColors.textMuted }}>
+                        <span
+                            style={{ fontSize: 12, color: ckColors.textMuted }}
+                        >
                             {formatFileSize(berkas.ukuran)} · v{berkas.versi}
                         </span>
                         <VerifikasiBadge
@@ -297,97 +306,70 @@ export function ChecklistItemRow({
                 </div>
             )}
 
-            <Dialog open={uploadOpen} onOpenChange={setUploadOpen}>
-                <DialogContent>
-                    <DialogTitle>
+            <CkDialog open={uploadOpen} onOpenChange={setUploadOpen}>
+                <CkDialogContent>
+                    <CkDialogTitle>
                         {berkas ? 'Ganti berkas' : 'Unggah berkas'}
-                    </DialogTitle>
-                    <DialogDescription>{item.nama}</DialogDescription>
+                    </CkDialogTitle>
+                    <CkDialogDescription>{item.nama}</CkDialogDescription>
 
-                    <input
-                        ref={fileInput}
-                        type="file"
-                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
-                        className="mt-2 block w-full text-sm"
-                    />
-                    {uploadError && (
-                        <p
-                            style={{
-                                fontSize: 13,
-                                color: ckColors.danger,
-                                marginTop: 6,
-                            }}
+                    <CkDialogBody>
+                        <CkField
+                            label="Berkas"
+                            error={uploadError ?? undefined}
+                            hint="PDF, JPG, PNG, DOC, atau XLS — maksimum 10 MB."
                         >
-                            {uploadError}
-                        </p>
-                    )}
-                    <p
-                        style={{
-                            fontSize: 12,
-                            color: ckColors.textMuted,
-                            marginTop: 6,
-                        }}
-                    >
-                        PDF, JPG, PNG, DOC, atau XLS — maksimum 10 MB.
-                    </p>
+                            <CkFileInput
+                                ref={fileInput}
+                                accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                            />
+                        </CkField>
+                    </CkDialogBody>
 
-                    <DialogFooter className="gap-2">
-                        <DialogClose asChild>
-                            <button
-                                type="button"
-                                className="rounded-md border px-3 py-1.5 text-sm"
-                            >
-                                Batal
-                            </button>
-                        </DialogClose>
-                        <button
-                            type="button"
-                            disabled={uploading}
-                            onClick={submitUpload}
-                            className="rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-60"
-                            style={{ background: ckColors.accent }}
-                        >
+                    <CkDialogFooter>
+                        <CkDialogClose asChild>
+                            <CkButton variant="ghost">Batal</CkButton>
+                        </CkDialogClose>
+                        <CkButton disabled={uploading} onClick={submitUpload}>
                             {uploading ? 'Mengunggah…' : 'Unggah'}
-                        </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </CkButton>
+                    </CkDialogFooter>
+                </CkDialogContent>
+            </CkDialog>
 
-            <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-                <DialogContent>
-                    <DialogTitle>Tolak berkas</DialogTitle>
-                    <DialogDescription>
+            <CkDialog open={rejectOpen} onOpenChange={setRejectOpen}>
+                <CkDialogContent>
+                    <CkDialogTitle>Tolak berkas</CkDialogTitle>
+                    <CkDialogDescription>
                         Jelaskan apa yang perlu diperbaiki — operator akan
                         melihat catatan ini saat mengunggah ulang.
-                    </DialogDescription>
+                    </CkDialogDescription>
 
-                    <Textarea
-                        value={catatan}
-                        onChange={(e) => setCatatan(e.target.value)}
-                        placeholder="Mis. Scan buram, mohon unggah ulang dengan resolusi lebih tinggi."
-                        rows={3}
-                    />
+                    <CkDialogBody>
+                        <CkField label="Catatan verifikasi">
+                            <CkTextarea
+                                value={catatan}
+                                onChange={(e) => setCatatan(e.target.value)}
+                                placeholder="Mis. Scan buram, mohon unggah ulang dengan resolusi lebih tinggi."
+                                rows={3}
+                            />
+                        </CkField>
+                    </CkDialogBody>
 
-                    <DialogFooter className="gap-2">
-                        <DialogClose asChild>
-                            <button
-                                type="button"
-                                className="rounded-md border px-3 py-1.5 text-sm"
-                            >
-                                Batal
-                            </button>
-                        </DialogClose>
-                        <button
-                            type="button"
+                    <CkDialogFooter>
+                        <CkDialogClose asChild>
+                            <CkButton variant="ghost">Batal</CkButton>
+                        </CkDialogClose>
+                        <CkButton
+                            variant="danger"
                             disabled={verifying || catatan.trim() === ''}
                             onClick={() => verify('ditolak', catatan)}
-                            className="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white disabled:opacity-60"
                         >
                             Tolak berkas
-                        </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </CkButton>
+                    </CkDialogFooter>
+                </CkDialogContent>
+            </CkDialog>
         </div>
     );
 }

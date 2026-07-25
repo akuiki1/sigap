@@ -1,19 +1,24 @@
 import { router, usePage } from '@inertiajs/react';
 import { useRef, useState } from 'react';
-import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
 import { formatDate, formatFileSize } from '@/lib/utils';
 import berkasRoutes from '@/routes/berkas';
 import paketRoutes from '@/routes/paket';
 import progresRoutes from '@/routes/progres';
 import type { ProgresEntry } from '@/types';
+import {
+    CkButton,
+    CkDialog,
+    CkDialogBody,
+    CkDialogClose,
+    CkDialogContent,
+    CkDialogDescription,
+    CkDialogFooter,
+    CkDialogTitle,
+    CkField,
+    CkFileInput,
+    CkInput,
+    CkTextarea,
+} from './ck-dialog';
 import { CkCard, CkSectionLabel, VerifikasiBadge } from './primitives';
 import { ckColors } from './tokens';
 
@@ -58,101 +63,73 @@ function TambahProgresDialog({
     }
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogTitle>Catat entri progres</DialogTitle>
-                <DialogDescription>
-                    Dokumentasikan kondisi fisik gedung pada tanggal & persentase
-                    tertentu.
-                </DialogDescription>
+        <CkDialog open={open} onOpenChange={onOpenChange}>
+            <CkDialogContent>
+                <CkDialogTitle>Catat entri progres</CkDialogTitle>
+                <CkDialogDescription>
+                    Dokumentasikan kondisi fisik gedung pada tanggal &
+                    persentase tertentu.
+                </CkDialogDescription>
 
-                <div
-                    style={{ display: 'flex', flexDirection: 'column', gap: 10 }}
-                >
-                    <label style={{ fontSize: 13, color: ckColors.textMuted }}>
-                        Tanggal
-                        <input
-                            ref={tanggalRef}
-                            type="date"
-                            className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
-                        />
-                        {errors.tanggal && (
-                            <span
-                                style={{ color: ckColors.danger, fontSize: 12 }}
-                            >
-                                {errors.tanggal}
-                            </span>
-                        )}
-                    </label>
+                <CkDialogBody>
+                    <div
+                        style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr)',
+                            gap: 12,
+                        }}
+                    >
+                        <CkField label="Tanggal" error={errors.tanggal}>
+                            <CkInput ref={tanggalRef} type="date" />
+                        </CkField>
 
-                    <label style={{ fontSize: 13, color: ckColors.textMuted }}>
-                        Persentase progres fisik (%)
-                        <input
-                            ref={persentaseRef}
-                            type="number"
-                            min={0}
-                            max={100}
-                            className="mt-1 block w-full rounded-md border px-2 py-1.5 text-sm"
-                        />
-                        {errors.persentase && (
-                            <span
-                                style={{ color: ckColors.danger, fontSize: 12 }}
-                            >
-                                {errors.persentase}
-                            </span>
-                        )}
-                    </label>
+                        <CkField
+                            label="Progres fisik (%)"
+                            error={errors.persentase}
+                        >
+                            <CkInput
+                                ref={persentaseRef}
+                                type="number"
+                                min={0}
+                                max={100}
+                            />
+                        </CkField>
+                    </div>
 
-                    <label style={{ fontSize: 13, color: ckColors.textMuted }}>
-                        Keterangan (opsional)
-                        <Textarea
+                    <CkField
+                        label="Keterangan (opsional)"
+                        error={errors.keterangan}
+                    >
+                        <CkTextarea
                             ref={keteranganRef}
                             rows={2}
-                            className="mt-1"
                             placeholder="Mis. Pekerjaan pondasi selesai, mulai struktur lantai 1."
                         />
-                    </label>
+                    </CkField>
 
-                    <label style={{ fontSize: 13, color: ckColors.textMuted }}>
-                        Foto (bisa lebih dari satu sudut)
-                        <input
+                    <CkField
+                        label="Foto"
+                        error={errors.foto}
+                        hint="Bisa lebih dari satu sudut — JPG atau PNG, maksimum 10 MB per foto."
+                    >
+                        <CkFileInput
                             ref={fotoRef}
-                            type="file"
                             accept=".jpg,.jpeg,.png"
                             multiple
-                            className="mt-1 block w-full text-sm"
                         />
-                        {errors.foto && (
-                            <span
-                                style={{ color: ckColors.danger, fontSize: 12 }}
-                            >
-                                {errors.foto}
-                            </span>
-                        )}
-                    </label>
-                </div>
+                    </CkField>
+                </CkDialogBody>
 
-                <DialogFooter className="gap-2">
-                    <DialogClose asChild>
-                        <button
-                            type="button"
-                            className="rounded-md border px-3 py-1.5 text-sm"
-                        >
-                            Batal
-                        </button>
-                    </DialogClose>
-                    <button
-                        type="button"
-                        disabled={submitting}
-                        onClick={submit}
-                        className="rounded-md px-3 py-1.5 text-sm text-white disabled:opacity-60"
-                        style={{ background: ckColors.accent }}
-                    >
+                <CkDialogFooter>
+                    <CkDialogClose asChild>
+                        <CkButton variant="ghost">Batal</CkButton>
+                    </CkDialogClose>
+                    <CkButton disabled={submitting} onClick={submit}>
                         {submitting ? 'Menyimpan…' : 'Simpan'}
-                    </button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                    </CkButton>
+                </CkDialogFooter>
+            </CkDialogContent>
+        </CkDialog>
     );
 }
 
@@ -260,11 +237,18 @@ function ProgresEntryCard({
                     ` · diverifikasi oleh ${entry.diverifikasi_oleh}`}
             </div>
 
-            {entry.status_verifikasi === 'ditolak' && entry.catatan_verifikasi && (
-                <div style={{ fontSize: 13, color: ckColors.danger, marginTop: 4 }}>
-                    Catatan: {entry.catatan_verifikasi}
-                </div>
-            )}
+            {entry.status_verifikasi === 'ditolak' &&
+                entry.catatan_verifikasi && (
+                    <div
+                        style={{
+                            fontSize: 13,
+                            color: ckColors.danger,
+                            marginTop: 4,
+                        }}
+                    >
+                        Catatan: {entry.catatan_verifikasi}
+                    </div>
+                )}
 
             {canVerify && entry.status_verifikasi === 'diajukan' && (
                 <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
@@ -307,40 +291,38 @@ function ProgresEntryCard({
                 </div>
             )}
 
-            <Dialog open={rejectOpen} onOpenChange={setRejectOpen}>
-                <DialogContent>
-                    <DialogTitle>Tolak entri progres</DialogTitle>
-                    <DialogDescription>
+            <CkDialog open={rejectOpen} onOpenChange={setRejectOpen}>
+                <CkDialogContent>
+                    <CkDialogTitle>Tolak entri progres</CkDialogTitle>
+                    <CkDialogDescription>
                         Jelaskan apa yang perlu diperbaiki atau diklarifikasi.
-                    </DialogDescription>
+                    </CkDialogDescription>
 
-                    <Textarea
-                        value={catatan}
-                        onChange={(e) => setCatatan(e.target.value)}
-                        placeholder="Mis. Persentase tidak sesuai dengan foto yang dilampirkan."
-                        rows={3}
-                    />
+                    <CkDialogBody>
+                        <CkField label="Catatan verifikasi">
+                            <CkTextarea
+                                value={catatan}
+                                onChange={(e) => setCatatan(e.target.value)}
+                                placeholder="Mis. Persentase tidak sesuai dengan foto yang dilampirkan."
+                                rows={3}
+                            />
+                        </CkField>
+                    </CkDialogBody>
 
-                    <DialogFooter className="gap-2">
-                        <DialogClose asChild>
-                            <button
-                                type="button"
-                                className="rounded-md border px-3 py-1.5 text-sm"
-                            >
-                                Batal
-                            </button>
-                        </DialogClose>
-                        <button
-                            type="button"
+                    <CkDialogFooter>
+                        <CkDialogClose asChild>
+                            <CkButton variant="ghost">Batal</CkButton>
+                        </CkDialogClose>
+                        <CkButton
+                            variant="danger"
                             disabled={verifying || catatan.trim() === ''}
                             onClick={() => verify('ditolak', catatan)}
-                            className="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white disabled:opacity-60"
                         >
                             Tolak entri
-                        </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                        </CkButton>
+                    </CkDialogFooter>
+                </CkDialogContent>
+            </CkDialog>
         </div>
     );
 }

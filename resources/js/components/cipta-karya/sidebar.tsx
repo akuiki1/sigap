@@ -331,7 +331,10 @@ export function CiptaKaryaSidebar({ active }: { active: CiptaKaryaNavKey }) {
                                 {auth.user.name}
                             </div>
                             <div
-                                style={{ fontSize: 11, color: ckColors.textMuted }}
+                                style={{
+                                    fontSize: 11,
+                                    color: ckColors.textMuted,
+                                }}
                             >
                                 {auth.user.role_label}
                             </div>

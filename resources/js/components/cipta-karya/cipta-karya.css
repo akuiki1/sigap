@@ -23,3 +23,50 @@
 .ck-checklist-item:hover {
     background: rgba(0, 0, 0, 0.02);
 }
+
+/* Kontrol form & tombol di dalam dialog bertema Cipta Karya (ck-dialog.tsx). */
+.ck-kontrol:focus {
+    border-color: #0066b3;
+    box-shadow: 0 0 0 3px rgba(0, 102, 179, 0.14);
+}
+
+.ck-kontrol::placeholder {
+    color: #b4b2ac;
+}
+
+.ck-file::file-selector-button {
+    margin-right: 10px;
+    padding: 4px 10px;
+    border: 1px solid rgba(0, 0, 0, 0.13);
+    border-radius: 8px;
+    background: #fff;
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 550;
+    color: #0066b3;
+    cursor: pointer;
+}
+
+.ck-btn:hover:not(:disabled) {
+    filter: brightness(0.96);
+}
+
+.ck-dialog-content:focus {
+    outline: none;
+}
+
+/* Penanda pratinjau titik koordinat yang belum disimpan — berdenyut halus
+   supaya jelas bedanya dari titik yang sudah tercatat. */
+.ck-penanda-pratinjau {
+    animation: ck-denyut 1.6s ease-in-out infinite;
+}
+
+@keyframes ck-denyut {
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-3px);
+    }
+}
