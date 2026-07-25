@@ -56,26 +56,114 @@ function formatPosisi(lat: number, lng: number): string {
 }
 
 /**
- * Baca isi kotak lintang/bujur menjadi posisi yang dipakai peta. Null bila
- * salah satunya belum terisi atau di luar rentang bumi — penanda pratinjau
- * lalu disembunyikan alih-alih melompat ke titik ngawur saat diketik separuh.
+ * Bentuk yang ditulis balik ke kotak koordinat setelah klik/geser di peta —
+ * sengaja sama persis dengan yang disalin orang dari Google Maps, supaya isi
+ * kotaknya konsisten dari mana pun titiknya datang. Tujuh desimal ≈ 1 cm,
+ * setara presisi kolom di basis data.
  */
-function bacaPosisi(
-    lat: string,
-    lng: string,
-): { lat: number; lng: number } | null {
-    const y = Number.parseFloat(lat);
-    const x = Number.parseFloat(lng);
+function formatIsian(lat: number, lng: number): string {
+    return `${lat.toFixed(7)}, ${lng.toFixed(7)}`;
+}
 
-    if (!Number.isFinite(y) || !Number.isFinite(x)) {
+type Posisi = { lat: number; lng: number };
+
+function sahkan(lat: number, lng: number): Posisi | null {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
         return null;
     }
 
-    if (Math.abs(y) > 90 || Math.abs(x) > 180) {
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) {
         return null;
     }
 
-    return { lat: y, lng: x };
+    return { lat, lng };
+}
+
+/**
+ * Hemisfer pada notasi derajat-menit-detik → sumbu mana & tandanya. Selain
+ * singkatan Inggris (N/S/E/W), Google Maps berbahasa Indonesia memakai
+ * U/S (utara/selatan) dan T/B (timur/barat), termasuk bentuk panjang
+ * LU/LS/BT/BB — semuanya ikut dikenali supaya tempelan apa adanya tetap jalan.
+ */
+const HEMISFER: Record<string, { sumbu: 'lat' | 'lng'; tanda: 1 | -1 }> = {
+    N: { sumbu: 'lat', tanda: 1 },
+    U: { sumbu: 'lat', tanda: 1 },
+    LU: { sumbu: 'lat', tanda: 1 },
+    S: { sumbu: 'lat', tanda: -1 },
+    LS: { sumbu: 'lat', tanda: -1 },
+    E: { sumbu: 'lng', tanda: 1 },
+    T: { sumbu: 'lng', tanda: 1 },
+    BT: { sumbu: 'lng', tanda: 1 },
+    W: { sumbu: 'lng', tanda: -1 },
+    B: { sumbu: 'lng', tanda: -1 },
+    BB: { sumbu: 'lng', tanda: -1 },
+};
+
+/** Mis. 2°35'01.1"S 115°22'53.3"E — bentuk yang muncul di URL Google Maps. */
+const POLA_DMS =
+    /(\d+(?:\.\d+)?)\s*°\s*(?:(\d+(?:\.\d+)?)\s*['’′]\s*)?(?:(\d+(?:\.\d+)?)\s*(?:"|”|″|'')\s*)?([A-Z]{1,2})/gi;
+
+function bacaDms(teks: string): Posisi | null {
+    const nilai: Partial<Posisi> = {};
+    let cocok = 0;
+
+    for (const m of teks.matchAll(POLA_DMS)) {
+        const arah = HEMISFER[m[4].toUpperCase()];
+
+        if (!arah) {
+            return null;
+        }
+
+        const desimal =
+            Number.parseFloat(m[1]) +
+            Number.parseFloat(m[2] ?? '0') / 60 +
+            Number.parseFloat(m[3] ?? '0') / 3600;
+
+        nilai[arah.sumbu] = desimal * arah.tanda;
+        cocok++;
+    }
+
+    // Harus tepat dua komponen, satu lintang & satu bujur.
+    if (cocok !== 2 || nilai.lat === undefined || nilai.lng === undefined) {
+        return null;
+    }
+
+    return sahkan(nilai.lat, nilai.lng);
+}
+
+function bacaDesimal(teks: string): Posisi | null {
+    // Tautan Google Maps menyimpan posisi setelah "@" (mis. /@-2.58,115.38,17z)
+    // atau pada parameter q= / ll=; ambil dari situ bila yang ditempel URL utuh.
+    const dariTautan = teks.match(/[@=](-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/);
+
+    const bagian = dariTautan
+        ? [dariTautan[1], dariTautan[2]]
+        : teks.split(/[,;\s]+/).filter((s) => s !== '');
+
+    if (bagian.length !== 2) {
+        return null;
+    }
+
+    return sahkan(Number.parseFloat(bagian[0]), Number.parseFloat(bagian[1]));
+}
+
+/**
+ * Baca satu kotak koordinat menjadi posisi peta. Sengaja satu kotak, bukan
+ * lintang & bujur terpisah: bentuk "lintang, bujur" itulah yang disalin orang
+ * dari Google Maps, dan memecahnya jadi dua kotak memaksa mereka memotong
+ * teksnya sendiri — pintu masuk salah tempel yang tak perlu ada.
+ *
+ * Null bila belum terisi atau formatnya belum dikenali; penanda pratinjau lalu
+ * disembunyikan alih-alih melompat ke titik ngawur saat baru diketik separuh.
+ */
+function bacaKoordinat(teks: string): Posisi | null {
+    const bersih = teks.trim();
+
+    if (bersih === '') {
+        return null;
+    }
+
+    return bacaDms(bersih) ?? bacaDesimal(bersih);
 }
 
 type HasilCari = {
@@ -394,30 +482,26 @@ export function PetaKoordinat({
     const [formOpen, setFormOpen] = useState(false);
     const [label, setLabel] = useState('');
     const [keterangan, setKeterangan] = useState('');
-    const [latText, setLatText] = useState('');
-    const [lngText, setLngText] = useState('');
+    const [koordinat, setKoordinat] = useState('');
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [submitting, setSubmitting] = useState(false);
 
-    const posisi = bacaPosisi(latText, lngText);
+    const posisi = bacaKoordinat(koordinat);
 
     // Dipecah jadi angka biasa supaya effect penanda pratinjau bergantung pada
     // nilai, bukan pada objek baru yang lahir tiap render.
     const posLat = posisi?.lat ?? null;
     const posLng = posisi?.lng ?? null;
 
-    function pilihPosisi(lat: number, lng: number) {
-        setLatText(lat.toFixed(7));
-        setLngText(lng.toFixed(7));
-        setFormOpen(true);
-    }
+    // Hanya keluhkan formatnya setelah ada yang diketik — kotak kosong itu
+    // keadaan awal yang normal, bukan kesalahan.
+    const formatBelumDikenali = koordinat.trim() !== '' && posisi === null;
 
     function tutupForm() {
         setFormOpen(false);
         setLabel('');
         setKeterangan('');
-        setLatText('');
-        setLngText('');
+        setKoordinat('');
         setErrors({});
     }
 
@@ -431,7 +515,13 @@ export function PetaKoordinat({
         const map = L.map(containerRef.current, {
             center: PUSAT_HST,
             zoom: ZOOM_AWAL,
-            scrollWheelZoom: false, // supaya scroll halaman tidak tersandera peta
+
+            // Zoom pakai roda mouse langsung saat kursor di atas peta —
+            // memencet tombol +/− untuk mencari satu bangunan terlalu lambat.
+            // Konsekuensinya scroll halaman ikut tertahan selama kursor berada
+            // di peta; itu perilaku yang sudah lazim di peta sematan, dan
+            // halaman masih bisa digulir lewat area di kiri/kanan peta.
+            scrollWheelZoom: true,
         });
 
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -460,7 +550,8 @@ export function PetaKoordinat({
         }
 
         function onClick(e: L.LeafletMouseEvent) {
-            pilihPosisi(e.latlng.lat, e.latlng.lng);
+            setKoordinat(formatIsian(e.latlng.lat, e.latlng.lng));
+            setFormOpen(true);
         }
 
         map.on('click', onClick);
@@ -531,8 +622,7 @@ export function PetaKoordinat({
 
             marker.on('dragend', () => {
                 const p = marker.getLatLng();
-                setLatText(p.lat.toFixed(7));
-                setLngText(p.lng.toFixed(7));
+                setKoordinat(formatIsian(p.lat, p.lng));
             });
 
             pratinjauRef.current = marker;
@@ -544,15 +634,21 @@ export function PetaKoordinat({
     }, [formOpen, posLat, posLng]);
 
     function simpan() {
+        if (!posisi) {
+            return;
+        }
+
         setSubmitting(true);
         setErrors({});
 
+        // Backend tetap menerima lintang & bujur terpisah; penggabungan murni
+        // urusan tampilan, jadi aturan validasinya tak perlu ikut berubah.
         router.post(
             paketRoutes.koordinat.store(paketId).url,
             {
                 label,
-                latitude: latText,
-                longitude: lngText,
+                latitude: posisi.lat,
+                longitude: posisi.lng,
                 keterangan: keterangan || null,
             },
             {
@@ -669,7 +765,7 @@ export function PetaKoordinat({
                         >
                             {posisi
                                 ? 'Geser penanda oranye di peta untuk menghaluskan letaknya, atau ubah angkanya langsung.'
-                                : 'Klik di peta untuk memilih posisi, atau ketik lintang & bujur bila sudah dicatat dari GPS di lapangan.'}
+                                : 'Klik di peta untuk memilih posisi, atau tempel koordinatnya bila sudah dicatat dari GPS maupun Google Maps.'}
                         </div>
 
                         <div
@@ -683,7 +779,7 @@ export function PetaKoordinat({
                                 style={{
                                     display: 'grid',
                                     gridTemplateColumns:
-                                        'minmax(0,1.4fr) minmax(0,1fr) minmax(0,1fr)',
+                                        'minmax(0,1fr) minmax(0,1.2fr)',
                                     gap: 12,
                                 }}
                             >
@@ -701,33 +797,21 @@ export function PetaKoordinat({
                                 </CkField>
 
                                 <CkField
-                                    label="Lintang (latitude)"
-                                    error={errors.latitude}
+                                    label="Koordinat (lintang, bujur)"
+                                    error={
+                                        formatBelumDikenali
+                                            ? 'Format belum dikenali. Contoh: -2.5836421, 115.3814752'
+                                            : (errors.latitude ??
+                                              errors.longitude)
+                                    }
+                                    hint="Bisa ditempel apa adanya dari Google Maps — koordinat, notasi derajat, atau tautan petanya."
                                 >
                                     <CkInput
-                                        value={latText}
+                                        value={koordinat}
                                         onChange={(e) =>
-                                            setLatText(e.target.value)
+                                            setKoordinat(e.target.value)
                                         }
-                                        inputMode="decimal"
-                                        placeholder="-2.5836421"
-                                        style={{
-                                            fontVariantNumeric: 'tabular-nums',
-                                        }}
-                                    />
-                                </CkField>
-
-                                <CkField
-                                    label="Bujur (longitude)"
-                                    error={errors.longitude}
-                                >
-                                    <CkInput
-                                        value={lngText}
-                                        onChange={(e) =>
-                                            setLngText(e.target.value)
-                                        }
-                                        inputMode="decimal"
-                                        placeholder="115.3814752"
+                                        placeholder="-2.5836421, 115.3814752"
                                         style={{
                                             fontVariantNumeric: 'tabular-nums',
                                         }}
