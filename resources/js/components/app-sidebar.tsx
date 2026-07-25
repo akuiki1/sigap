@@ -17,19 +17,21 @@ import { review } from '@/routes/audit';
 import { index as paketIndex } from '@/routes/paket';
 import type { NavItem } from '@/types';
 
+// Label disamakan persis dengan CiptaKaryaSidebar (dashboard/paket/audit)
+// supaya berpindah ke Settings tidak terasa seperti masuk aplikasi lain.
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Ringkasan',
         href: dashboard(),
         icon: Home,
     },
     {
-        title: 'Data Paket',
+        title: 'Paket',
         href: paketIndex(),
         icon: Folder,
     },
     {
-        title: 'Mode Audit',
+        title: 'Mode audit',
         href: review(),
         icon: Search,
     },

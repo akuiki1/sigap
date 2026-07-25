@@ -38,6 +38,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Collection<int, DokumenPaket> $dokumenPaket
+ * @property-read Collection<int, ProgresPaket> $progresPaket
  * @property-read int $dokumen_total_count Alias withCount, lihat DashboardController/PaketController.
  * @property-read int $dokumen_ada_count Alias withCount, lihat DashboardController/PaketController.
  * @property-read int $dokumen_wajib_belum_count Alias withCount, lihat DashboardController/PaketController.
@@ -111,6 +112,14 @@ class Paket extends Model
     public function dokumenPaket(): HasMany
     {
         return $this->hasMany(DokumenPaket::class);
+    }
+
+    /**
+     * @return HasMany<ProgresPaket, $this>
+     */
+    public function progresPaket(): HasMany
+    {
+        return $this->hasMany(ProgresPaket::class);
     }
 
     /**

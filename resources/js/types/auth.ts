@@ -1,8 +1,15 @@
+export type Role = 'admin' | 'operator' | 'pengawas' | 'auditor';
+
 export type User = {
     id: number;
     name: string;
     email: string;
     avatar?: string;
+    role: Role;
+    role_label: string;
+    can_input: boolean;
+    can_verify: boolean;
+    is_admin: boolean;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;
     created_at: string;

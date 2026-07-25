@@ -1,9 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuditController;
+use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DokumenPaketController;
 use App\Http\Controllers\PaketController;
+use App\Http\Controllers\ProgresPaketController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -15,6 +17,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::patch('paket/{paket}/dokumen/{checklistDokumen}', [DokumenPaketController::class, 'update'])
         ->name('paket.dokumen.update');
+
+    Route::post('paket/{paket}/dokumen/{checklistDokumen}/berkas', [BerkasController::class, 'store'])
+        ->name('paket.dokumen.berkas.store');
+    Route::patch('berkas/{berkas}/verifikasi', [BerkasController::class, 'verify'])
+        ->name('berkas.verify');
+    Route::get('berkas/{berkas}/unduh', [BerkasController::class, 'download'])
+        ->name('berkas.download');
+
+    Route::post('paket/{paket}/progres', [ProgresPaketController::class, 'store'])
+        ->name('paket.progres.store');
+    Route::patch('progres/{progresPaket}/verifikasi', [ProgresPaketController::class, 'verify'])
+        ->name('progres.verify');
 
     Route::get('audit', [AuditController::class, 'review'])->name('audit.review');
 });

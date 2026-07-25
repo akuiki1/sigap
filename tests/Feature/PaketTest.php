@@ -237,12 +237,50 @@ class PaketTest extends TestCase
 
     public function test_paket_can_be_deleted(): void
     {
-        $this->actingAsUser();
+        // Hapus paket hanya boleh oleh admin.
+        $this->actingAs(User::factory()->admin()->create());
         $paket = Paket::factory()->create();
 
         $this->delete(route('paket.destroy', $paket))
             ->assertRedirect(route('paket.index'));
 
         $this->assertSame(0, Paket::count());
+    }
+
+    public function test_auditor_cannot_create_update_or_delete_pakets(): void
+    {
+        $this->actingAs(User::factory()->auditor()->create());
+        $paket = Paket::factory()->create();
+
+        // Auditor hanya boleh melihat — semua aksi ubah ditolak 403.
+        $this->get(route('paket.create'))->assertForbidden();
+        $this->post(route('paket.store'), $this->validPayload())->assertForbidden();
+        $this->get(route('paket.edit', $paket))->assertForbidden();
+        $this->put(route('paket.update', $paket), $this->validPayload([
+            'kode_paket' => $paket->kode_paket,
+        ]))->assertForbidden();
+        $this->delete(route('paket.destroy', $paket))->assertForbidden();
+
+        // Auditor tetap boleh melihat daftar & detail.
+        $this->get(route('paket.index'))->assertOk();
+        $this->get(route('paket.show', $paket))->assertOk();
+    }
+
+    public function test_operator_can_input_but_cannot_delete_pakets(): void
+    {
+        $this->actingAs(User::factory()->operator()->create());
+        $paket = Paket::factory()->create();
+
+        $this->post(route('paket.store'), $this->validPayload())->assertRedirect();
+        $this->delete(route('paket.destroy', $paket))->assertForbidden();
+    }
+
+    public function test_pengawas_cannot_input_pakets(): void
+    {
+        $this->actingAs(User::factory()->pengawas()->create());
+
+        // Pengawas memverifikasi, bukan menginput — pembuatan paket ditolak.
+        $this->get(route('paket.create'))->assertForbidden();
+        $this->post(route('paket.store'), $this->validPayload())->assertForbidden();
     }
 }

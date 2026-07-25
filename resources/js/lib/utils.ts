@@ -36,6 +36,23 @@ export function formatCurrencyCompact(value: number): string {
 }
 
 /**
+ * Format ukuran berkas dalam bita menjadi KB/MB yang mudah dibaca.
+ */
+export function formatFileSize(bytes: number): string {
+    if (bytes < 1024) {
+        return `${bytes} B`;
+    }
+
+    const kb = bytes / 1024;
+
+    if (kb < 1024) {
+        return `${kb.toLocaleString('id-ID', { maximumFractionDigits: 0 })} KB`;
+    }
+
+    return `${(kb / 1024).toLocaleString('id-ID', { maximumFractionDigits: 1 })} MB`;
+}
+
+/**
  * Format tanggal Y-m-d dari server menjadi tanggal panjang Indonesia.
  * Mengembalikan '-' bila tanggal belum diisi.
  */

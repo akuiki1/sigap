@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { CSSProperties, ReactNode } from 'react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { dashboard } from '@/routes';
 import { review } from '@/routes/audit';
@@ -100,25 +106,6 @@ function IconPembayaran() {
         >
             <rect x="2.5" y="5" width="15" height="10" rx="2.5" />
             <path d="M2.5 8.4h15" />
-        </svg>
-    );
-}
-
-function IconProgres() {
-    return (
-        <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.7"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={iconStyle}
-        >
-            <path d="M3 13.4l4.6-4.6 3 3 6.4-6.5" />
-            <path d="M13.9 5.1h3.5v3.5" />
         </svg>
     );
 }
@@ -283,7 +270,6 @@ export function CiptaKaryaSidebar({ active }: { active: CiptaKaryaNavKey }) {
                 />
                 <NavRow icon={<IconDokumen />} label="Dokumen" />
                 <NavRow icon={<IconPembayaran />} label="Pembayaran" />
-                <NavRow icon={<IconProgres />} label="Progres" />
                 <NavRow
                     icon={<IconAudit />}
                     label="Mode audit"
@@ -294,52 +280,73 @@ export function CiptaKaryaSidebar({ active }: { active: CiptaKaryaNavKey }) {
 
             <div style={{ flex: 1 }} />
 
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: 8,
-                    borderRadius: 12,
-                }}
-            >
-                <div
-                    style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: '50%',
-                        flex: 'none',
-                        background: ckColors.accentSoft,
-                        color: ckColors.accent,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 13,
-                        fontWeight: 640,
-                        letterSpacing: '.01em',
-                    }}
-                >
-                    {getInitials(auth.user.name)}
-                </div>
-                <div style={{ minWidth: 0, lineHeight: 1.3, flex: 1 }}>
-                    <div
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        type="button"
+                        className="ck-nav-row"
                         style={{
-                            fontSize: 13,
-                            fontWeight: 560,
-                            color: ckColors.text,
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            padding: 8,
+                            borderRadius: 12,
+                            border: 'none',
+                            background: 'none',
+                            cursor: 'pointer',
+                            font: 'inherit',
+                            textAlign: 'left',
+                            width: '100%',
                         }}
                     >
-                        {auth.user.name}
-                    </div>
-                    <div style={{ fontSize: 11, color: ckColors.textMuted }}>
-                        Admin bidang
-                    </div>
-                </div>
-                <ChevronRight />
-            </div>
+                        <div
+                            style={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: '50%',
+                                flex: 'none',
+                                background: ckColors.accentSoft,
+                                color: ckColors.accent,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 13,
+                                fontWeight: 640,
+                                letterSpacing: '.01em',
+                            }}
+                        >
+                            {getInitials(auth.user.name)}
+                        </div>
+                        <div style={{ minWidth: 0, lineHeight: 1.3, flex: 1 }}>
+                            <div
+                                style={{
+                                    fontSize: 13,
+                                    fontWeight: 560,
+                                    color: ckColors.text,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                }}
+                            >
+                                {auth.user.name}
+                            </div>
+                            <div
+                                style={{ fontSize: 11, color: ckColors.textMuted }}
+                            >
+                                {auth.user.role_label}
+                            </div>
+                        </div>
+                        <ChevronRight />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                    className="w-56 rounded-lg"
+                    align="end"
+                    side="top"
+                >
+                    <UserMenuContent user={auth.user} />
+                </DropdownMenuContent>
+            </DropdownMenu>
 
             <div
                 style={{

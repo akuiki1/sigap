@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\DokumenPaket;
+use App\Models\ProgresPaket;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -32,6 +35,14 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // Alias singkat untuk kolom attachable_type Berkas (tabel polimorfik),
+        // supaya database tak menyimpan FQCN penuh — nama kelas bisa berubah
+        // (mis. dipindah namespace) tanpa perlu migrasi data lama.
+        Relation::enforceMorphMap([
+            'dokumen_paket' => DokumenPaket::class,
+            'progres_paket' => ProgresPaket::class,
+        ]);
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

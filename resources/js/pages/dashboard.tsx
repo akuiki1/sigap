@@ -1,4 +1,4 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import '@/components/cipta-karya/cipta-karya.css';
 import {
@@ -58,6 +58,7 @@ export default function Dashboard({
     tenggatTerdekat,
     tahunBerjalan,
 }: DashboardProps) {
+    const { auth } = usePage().props;
     const [query, setQuery] = useState('');
 
     const filteredPackages = useMemo(() => {
@@ -180,36 +181,38 @@ export default function Dashboard({
                                         }}
                                     />
                                 </div>
-                                <Link
-                                    href={create()}
-                                    className="ck-btn-accent"
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 6,
-                                        padding: '10px 16px',
-                                        borderRadius: 12,
-                                        background: ckColors.accent,
-                                        color: '#fff',
-                                        cursor: 'pointer',
-                                        fontSize: 14,
-                                        fontWeight: 590,
-                                        letterSpacing: '-.01em',
-                                    }}
-                                >
-                                    <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 15 15"
-                                        fill="none"
-                                        stroke="#fff"
-                                        strokeWidth="1.9"
-                                        strokeLinecap="round"
+                                {auth.user.can_input && (
+                                    <Link
+                                        href={create()}
+                                        className="ck-btn-accent"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 6,
+                                            padding: '10px 16px',
+                                            borderRadius: 12,
+                                            background: ckColors.accent,
+                                            color: '#fff',
+                                            cursor: 'pointer',
+                                            fontSize: 14,
+                                            fontWeight: 590,
+                                            letterSpacing: '-.01em',
+                                        }}
                                     >
-                                        <path d="M7.5 2v11M2 7.5h11" />
-                                    </svg>
-                                    Paket baru
-                                </Link>
+                                        <svg
+                                            width="14"
+                                            height="14"
+                                            viewBox="0 0 15 15"
+                                            fill="none"
+                                            stroke="#fff"
+                                            strokeWidth="1.9"
+                                            strokeLinecap="round"
+                                        >
+                                            <path d="M7.5 2v11M2 7.5h11" />
+                                        </svg>
+                                        Paket baru
+                                    </Link>
+                                )}
                             </div>
                         </header>
 

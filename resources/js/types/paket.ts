@@ -34,12 +34,29 @@ export type StatusOption = {
 
 export type StatusDokumen = 'ada' | 'belum';
 
+export type StatusVerifikasi = 'diajukan' | 'diverifikasi' | 'ditolak';
+
+/** Ringkasan berkas terkini (versi berlaku) yang diunggah untuk satu item checklist. */
+export type BerkasRingkas = {
+    id: number;
+    nama_asli: string;
+    ukuran: number;
+    versi: number;
+    status_verifikasi: StatusVerifikasi;
+    status_verifikasi_label: string;
+    catatan_verifikasi: string | null;
+    diunggah_oleh: string;
+    diunggah_pada: string | null;
+    diverifikasi_oleh: string | null;
+};
+
 /** Satu baris checklist dokumen dalam konteks realisasi sebuah paket. */
 export type DokumenChecklistItem = {
     id: number;
     nama: string;
     status: StatusDokumen;
     wajib: boolean;
+    berkas: BerkasRingkas | null;
 };
 
 /** Satu tahap ("Persiapan & anggaran", dst.) beserta checklist dokumennya. */
@@ -48,6 +65,27 @@ export type ChecklistSection = {
     done: number;
     total: number;
     docs: DokumenChecklistItem[];
+};
+
+/** Satu foto pendukung dalam sebuah entri riwayat progres. */
+export type ProgresFoto = {
+    id: number;
+    nama_asli: string;
+    ukuran: number;
+};
+
+/** Satu entri riwayat progres fisik ("gedung pas X% bentuknya gimana"). */
+export type ProgresEntry = {
+    id: number;
+    tanggal: string;
+    persentase: number;
+    keterangan: string | null;
+    status_verifikasi: StatusVerifikasi;
+    status_verifikasi_label: string;
+    catatan_verifikasi: string | null;
+    dilaporkan_oleh: string;
+    diverifikasi_oleh: string | null;
+    foto: ProgresFoto[];
 };
 
 export type FollowupTone = 'warn' | 'danger';

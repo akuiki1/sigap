@@ -6,6 +6,8 @@ use App\Enums\StatusDokumen;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 
 /**
  * @property int $id
@@ -14,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property StatusDokumen $status
  * @property-read ChecklistDokumen $checklistDokumen
  * @property-read Paket $paket
+ * @property-read Berkas|null $berkasTerkini
  */
 #[Fillable(['paket_id', 'checklist_dokumen_id', 'status'])]
 class DokumenPaket extends Model
@@ -50,5 +53,25 @@ class DokumenPaket extends Model
     public function checklistDokumen(): BelongsTo
     {
         return $this->belongsTo(ChecklistDokumen::class);
+    }
+
+    /**
+     * Seluruh riwayat berkas (semua versi) untuk item checklist ini.
+     *
+     * @return MorphMany<Berkas, $this>
+     */
+    public function berkas(): MorphMany
+    {
+        return $this->morphMany(Berkas::class, 'attachable');
+    }
+
+    /**
+     * Versi berkas yang berlaku saat ini (satu-satunya is_terkini=true).
+     *
+     * @return MorphOne<Berkas, $this>
+     */
+    public function berkasTerkini(): MorphOne
+    {
+        return $this->morphOne(Berkas::class, 'attachable')->where('is_terkini', true);
     }
 }

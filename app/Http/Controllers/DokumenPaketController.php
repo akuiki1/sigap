@@ -18,6 +18,9 @@ class DokumenPaketController extends Controller
      */
     public function update(Paket $paket, ChecklistDokumen $checklistDokumen): RedirectResponse
     {
+        // Menandai kelengkapan dokumen = aksi input, sejalan dengan izin ubah paket.
+        $this->authorize('update', $paket);
+
         /** @var DokumenPaket $dokumen */
         $dokumen = DokumenPaket::query()->firstOrNew([
             'paket_id' => $paket->id,

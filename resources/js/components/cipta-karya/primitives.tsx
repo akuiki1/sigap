@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { CSSProperties, ReactNode } from 'react';
+import type { StatusVerifikasi } from '@/types';
 import { ckColors } from './tokens';
 
 /** Kartu putih membulat dengan bayangan tipis — unit visual dasar halaman ini. */
@@ -98,4 +99,37 @@ export function CkRow({
     }
 
     return <div style={style}>{children}</div>;
+}
+
+const verifikasiTone: Record<StatusVerifikasi, { fg: string; bg: string }> = {
+    diajukan: { fg: ckColors.warn, bg: ckColors.warnSoft },
+    diverifikasi: { fg: ckColors.accent, bg: ckColors.accentSoft },
+    ditolak: { fg: ckColors.danger, bg: ckColors.dangerSoft },
+};
+
+/** Label kecil berwarna untuk status_verifikasi (berkas maupun entri progres). */
+export function VerifikasiBadge({
+    status,
+    label,
+}: {
+    status: StatusVerifikasi;
+    label: string;
+}) {
+    const tone = verifikasiTone[status];
+
+    return (
+        <span
+            style={{
+                fontSize: 11.5,
+                fontWeight: 590,
+                padding: '2px 8px',
+                borderRadius: 999,
+                color: tone.fg,
+                background: tone.bg,
+                whiteSpace: 'nowrap',
+            }}
+        >
+            {label}
+        </span>
+    );
 }

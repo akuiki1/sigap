@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Role;
 use App\Enums\StatusPaket;
 use App\Models\ChecklistDokumen;
 use App\Models\Paket;
@@ -19,12 +20,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        $this->seedAkun();
 
         $this->call(ChecklistDokumenSeeder::class);
+
+        // Paket contoh hanya dibuat sekali. Tanpa penjaga ini, tiap pemanggilan
+        // ulang seeder (mis. setelah menambah migrasi) akan menumpuk 22 paket
+        // baru di DB dev, sehingga seeder jadi tidak aman dijalankan lagi.
+        if (Paket::query()->exists()) {
+            return;
+        }
 
         // Sebaran status dibuat eksplisit agar kartu statistik dashboard dan
         // mode audit langsung punya data yang bisa dilihat setelah seeding.
@@ -35,6 +40,35 @@ class DatabaseSeeder extends Seeder
         ];
 
         $this->seedDokumenPaket($pakets);
+    }
+
+    /**
+     * Akun dev untuk tiap peran. Dibuat hanya bila emailnya belum ada — akun
+     * yang sudah dipakai login (dan mungkin sudah punya berkas/progres atas
+     * namanya) tidak boleh ditimpa atau diduplikasi saat seeder diulang.
+     */
+    private function seedAkun(): void
+    {
+        // Akun uji utama = admin, agar dev bisa mengakses semua fitur (input,
+        // verifikasi, hapus, kelola user) tanpa berpindah akun. Sisanya satu
+        // contoh tiap peran untuk menguji batas hak akses di aplikasi.
+        $akun = [
+            ['Test User', 'test@example.com', Role::Admin],
+            ['Operator PPTK', 'operator@example.com', Role::Operator],
+            ['Pengawas PPK', 'pengawas@example.com', Role::Pengawas],
+            ['Auditor', 'auditor@example.com', Role::Auditor],
+        ];
+
+        foreach ($akun as [$nama, $email, $peran]) {
+            if (User::query()->where('email', $email)->exists()) {
+                continue;
+            }
+
+            User::factory()->role($peran)->create([
+                'name' => $nama,
+                'email' => $email,
+            ]);
+        }
     }
 
     /**
