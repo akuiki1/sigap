@@ -11,6 +11,7 @@ use App\Models\ChecklistDokumen;
 use App\Models\DokumenPaket;
 use App\Models\Paket;
 use App\Models\ProgresPaket;
+use App\Models\TitikKoordinatPaket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -74,6 +75,8 @@ class PaketController extends Controller
             'progresPaket.foto',
             'progresPaket.dilaporkanOleh',
             'progresPaket.diverifikasiOleh',
+            'titikKoordinat' => fn ($query) => $query->oldest('id'),
+            'titikKoordinat.dicatatOleh',
         ]);
 
         $totalItem = $paket->dokumenPaket->count();
@@ -100,6 +103,14 @@ class PaketController extends Controller
             'rencanaProgres' => $rencanaProgres,
             'sections' => $this->groupSections($paket->dokumenPaket),
             'riwayatProgres' => $paket->progresPaket->map(fn (ProgresPaket $p) => $this->progresRingkas($p))->values(),
+            'titikKoordinat' => $paket->titikKoordinat->map(fn (TitikKoordinatPaket $t) => [
+                'id' => $t->id,
+                'label' => $t->label,
+                'latitude' => $t->latitude,
+                'longitude' => $t->longitude,
+                'keterangan' => $t->keterangan,
+                'dicatat_oleh' => $t->dicatatOleh->name,
+            ])->values(),
             'masaPelaksanaan' => $mulaiPelaksanaan && $selesaiPelaksanaan
                 ? $mulaiPelaksanaan->diffInDays($selesaiPelaksanaan).' hari kalender'
                 : null,

@@ -5,6 +5,7 @@ export type Paket = {
     kode_paket: string;
     nama: string;
     lokasi: string | null;
+    alamat: string | null;
     penyedia: string | null;
     sumber_dana: string | null;
     nilai_kontrak: number;
@@ -86,6 +87,16 @@ export type ProgresEntry = {
     dilaporkan_oleh: string;
     diverifikasi_oleh: string | null;
     foto: ProgresFoto[];
+};
+
+/** Satu titik koordinat gedung pada peta. Satu paket bisa punya beberapa. */
+export type TitikKoordinat = {
+    id: number;
+    label: string;
+    latitude: number;
+    longitude: number;
+    keterangan: string | null;
+    dicatat_oleh: string;
 };
 
 export type FollowupTone = 'warn' | 'danger';

@@ -112,6 +112,20 @@ export function PaketForm({
                         </div>
                     </div>
 
+                    <div className="grid gap-2">
+                        <Label htmlFor="alamat">Alamat Gedung</Label>
+
+                        <Textarea
+                            id="alamat"
+                            name="alamat"
+                            rows={2}
+                            defaultValue={paket?.alamat ?? ''}
+                            placeholder="Jl. Perwira No. 1, Barabai, Kab. Hulu Sungai Tengah"
+                        />
+
+                        <InputError message={errors.alamat} />
+                    </div>
+
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="grid gap-2">
                             <Label htmlFor="sumber_dana">Sumber Dana</Label>

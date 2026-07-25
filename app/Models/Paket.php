@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string $kode_paket
  * @property string $nama
  * @property string|null $lokasi
+ * @property string|null $alamat
  * @property string|null $penyedia
  * @property string|null $sumber_dana
  * @property int $nilai_kontrak
@@ -39,6 +40,7 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  * @property-read Collection<int, DokumenPaket> $dokumenPaket
  * @property-read Collection<int, ProgresPaket> $progresPaket
+ * @property-read Collection<int, TitikKoordinatPaket> $titikKoordinat
  * @property-read int $dokumen_total_count Alias withCount, lihat DashboardController/PaketController.
  * @property-read int $dokumen_ada_count Alias withCount, lihat DashboardController/PaketController.
  * @property-read int $dokumen_wajib_belum_count Alias withCount, lihat DashboardController/PaketController.
@@ -47,6 +49,7 @@ use Illuminate\Support\Carbon;
     'kode_paket',
     'nama',
     'lokasi',
+    'alamat',
     'penyedia',
     'sumber_dana',
     'nilai_kontrak',
@@ -120,6 +123,14 @@ class Paket extends Model
     public function progresPaket(): HasMany
     {
         return $this->hasMany(ProgresPaket::class);
+    }
+
+    /**
+     * @return HasMany<TitikKoordinatPaket, $this>
+     */
+    public function titikKoordinat(): HasMany
+    {
+        return $this->hasMany(TitikKoordinatPaket::class);
     }
 
     /**

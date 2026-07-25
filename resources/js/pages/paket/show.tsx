@@ -3,6 +3,7 @@ import { Fragment, useState } from 'react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
 import { ChecklistItemRow } from '@/components/cipta-karya/checklist-item';
 import '@/components/cipta-karya/cipta-karya.css';
+import { PetaKoordinat } from '@/components/cipta-karya/peta-koordinat';
 import { CkCard, CkSectionLabel } from '@/components/cipta-karya/primitives';
 import { ProgresRiwayat } from '@/components/cipta-karya/progres-riwayat';
 import { SCurveChart } from '@/components/cipta-karya/s-curve-chart';
@@ -25,6 +26,7 @@ import type {
     Paket,
     ProgresAgregat,
     ProgresEntry,
+    TitikKoordinat,
 } from '@/types';
 
 type PaketShowProps = {
@@ -37,6 +39,7 @@ type PaketShowProps = {
     riwayatProgres: ProgresEntry[];
     masaPelaksanaan: string | null;
     progresAgregat: ProgresAgregat;
+    titikKoordinat: TitikKoordinat[];
 };
 
 function formatShortDate(value: string | null): string {
@@ -142,6 +145,7 @@ export default function PaketShow({
     riwayatProgres,
     masaPelaksanaan,
     progresAgregat,
+    titikKoordinat,
 }: PaketShowProps) {
     const { auth } = usePage().props;
     const [pendingDoc, setPendingDoc] = useState<number | null>(null);
@@ -617,6 +621,14 @@ export default function PaketShow({
                                     </div>
                                 ))}
                             </div>
+                        </section>
+
+                        <section style={{ marginTop: 32 }}>
+                            <PetaKoordinat
+                                paketId={data.id}
+                                alamat={data.alamat}
+                                titik={titikKoordinat}
+                            />
                         </section>
 
                         <section style={{ marginTop: 32 }}>

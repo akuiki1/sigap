@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DokumenPaketController;
 use App\Http\Controllers\PaketController;
 use App\Http\Controllers\ProgresPaketController;
+use App\Http\Controllers\TitikKoordinatPaketController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -29,6 +30,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('paket.progres.store');
     Route::patch('progres/{progresPaket}/verifikasi', [ProgresPaketController::class, 'verify'])
         ->name('progres.verify');
+
+    Route::post('paket/{paket}/koordinat', [TitikKoordinatPaketController::class, 'store'])
+        ->name('paket.koordinat.store');
+    Route::delete('koordinat/{titikKoordinat}', [TitikKoordinatPaketController::class, 'destroy'])
+        ->name('koordinat.destroy');
 
     Route::get('audit', [AuditController::class, 'review'])->name('audit.review');
 });

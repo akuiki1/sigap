@@ -25,6 +25,7 @@ trait PaketValidationRules
             ],
             'nama' => ['required', 'string', 'max:255'],
             'lokasi' => ['nullable', 'string', 'max:255'],
+            'alamat' => ['nullable', 'string', 'max:500'],
             'penyedia' => ['nullable', 'string', 'max:255'],
             'sumber_dana' => ['nullable', 'string', 'max:255'],
             // Rupiah penuh tanpa sen; batas atas menjaga nilai tetap muat di
