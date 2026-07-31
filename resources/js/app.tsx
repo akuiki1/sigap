@@ -22,6 +22,11 @@ createInertiaApp({
             case name.startsWith('paket/'):
             case name === 'audit/review':
                 return null;
+            // Halaman Masuk juga membawa shell sendiri (panel kiri bergradasi
+            // + kanvas krem) sesuai handoff desain, jadi tidak dibungkus
+            // AuthLayout yang dipakai halaman auth lainnya.
+            case name === 'auth/login':
+                return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
             case name.startsWith('settings/'):

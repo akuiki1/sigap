@@ -34,5 +34,27 @@ export const ckColors = {
     cardShadow: '0 1px 1.5px rgba(30,25,15,.04), 0 5px 18px rgba(30,25,15,.03)',
 } as const;
 
+/**
+ * Token khusus halaman Masuk (pages/auth/login.tsx). Warnanya tidak dipakai di
+ * layar lain: panel kiri bergradasi dan kanvas krem hanya ada di halaman ini.
+ *
+ * Gradasi mockup (#0E4C8A → #082C51) diganti gradasi biru PUPR dengan titik
+ * henti yang sama persis, mengikuti alasan yang sama seperti ckColors.accent.
+ */
+export const ckLogin = {
+    /** Kanvas panel kanan — krem sangat terang, sedikit lebih hangat dari putih. */
+    kanvas: '#FCFBF9',
+    gradasi: 'linear-gradient(155deg, #0066b3 0%, #004b87 58%, #00325a 100%)',
+    /** Teks di atas gradasi: putih penuh, lalu dua tingkat redup. */
+    atasGradasi: 'rgba(255,255,255,.7)',
+    atasGradasiRedup: 'rgba(255,255,255,.62)',
+    atasGradasiPaling: 'rgba(255,255,255,.55)',
+    labelField: '#5F5D57',
+    borderField: '#E2E0DA',
+    ikonField: '#9C9A94',
+    /** Titik status "Tahun Anggaran" — hijau iOS mockup, didesaturasi seperti danger/warn. */
+    ok: '#2E9E4F',
+} as const;
+
 export const ckFont =
     '-apple-system, "Inter", "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';

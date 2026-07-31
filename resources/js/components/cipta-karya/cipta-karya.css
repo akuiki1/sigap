@@ -70,3 +70,58 @@
         transform: translateY(-3px);
     }
 }
+
+/* ── Halaman Masuk (pages/auth/login.tsx) ───────────────────────────────── */
+
+/* Mockup memakai cincin fokus 3.5px, sedikit lebih tebal dari .ck-kontrol
+   di dalam dialog, karena field login berdiri sendiri di kanvas kosong. */
+.ck-login-field:focus {
+    border-color: #0066b3;
+    box-shadow: 0 0 0 3.5px rgba(0, 102, 179, 0.14);
+}
+
+.ck-login-field::placeholder {
+    color: #b4b2ac;
+}
+
+.ck-login-toggle:hover {
+    color: #5f5d57;
+}
+
+.ck-login-submit:hover:not(:disabled) {
+    filter: brightness(0.94);
+}
+
+.ck-login-submit:active:not(:disabled) {
+    filter: brightness(0.88);
+}
+
+.ck-login-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Tata letak panel kiri ditaruh di sini, bukan di style inline, supaya media
+   query di bawah bisa menimpanya — style inline selalu menang atas stylesheet. */
+.ck-login-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Panel kiri bergradasi murni dekoratif — di layar sempit ia memakan ruang
+   form, jadi disembunyikan dan kanvas kanan mengambil lebar penuh. */
+@media (max-width: 900px) {
+    .ck-login-panel {
+        display: none;
+    }
+}
+
+.ck-login-passkey:hover:not(:disabled) {
+    background: rgba(0, 0, 0, 0.025);
+}
+
+.ck-login-passkey:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
