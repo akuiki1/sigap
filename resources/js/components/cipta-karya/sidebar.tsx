@@ -9,11 +9,12 @@ import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { dashboard } from '@/routes';
 import { review } from '@/routes/audit';
+import { index as dokumenIndex } from '@/routes/dokumen';
 import { index as paketIndex } from '@/routes/paket';
 import './cipta-karya.css';
 import { ckColors } from './tokens';
 
-export type CiptaKaryaNavKey = 'ringkasan' | 'paket' | 'audit';
+export type CiptaKaryaNavKey = 'ringkasan' | 'paket' | 'dokumen' | 'audit';
 
 const iconStyle: CSSProperties = { flex: 'none' };
 
@@ -92,24 +93,6 @@ function IconDokumen() {
     );
 }
 
-function IconPembayaran() {
-    return (
-        <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            style={iconStyle}
-        >
-            <rect x="2.5" y="5" width="15" height="10" rx="2.5" />
-            <path d="M2.5 8.4h15" />
-        </svg>
-    );
-}
-
 function IconAudit() {
     return (
         <svg
@@ -156,38 +139,30 @@ function NavRow({
     icon: ReactNode;
     label: string;
     active?: boolean;
-    href?: string;
+    href: string;
 }) {
-    const content = (
-        <div
-            style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 12,
-                padding: '9px 12px',
-                borderRadius: 10,
-                fontSize: 14,
-                fontWeight: active ? 590 : 510,
-                letterSpacing: '-.01em',
-                background: active ? ckColors.accentSoft : 'transparent',
-                color: active ? ckColors.accent : '#5F5D57',
-                cursor: href ? 'pointer' : 'default',
-                transition: 'background-color .12s ease',
-            }}
-            className={href && !active ? 'ck-nav-row' : undefined}
-        >
-            {icon}
-            {label}
-        </div>
-    );
-
-    if (!href) {
-        return content;
-    }
-
     return (
         <Link href={href} style={{ display: 'block' }}>
-            {content}
+            <div
+                style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 12,
+                    padding: '9px 12px',
+                    borderRadius: 10,
+                    fontSize: 14,
+                    fontWeight: active ? 590 : 510,
+                    letterSpacing: '-.01em',
+                    background: active ? ckColors.accentSoft : 'transparent',
+                    color: active ? ckColors.accent : '#5F5D57',
+                    cursor: 'pointer',
+                    transition: 'background-color .12s ease',
+                }}
+                className={active ? undefined : 'ck-nav-row'}
+            >
+                {icon}
+                {label}
+            </div>
         </Link>
     );
 }
@@ -268,8 +243,12 @@ export function CiptaKaryaSidebar({ active }: { active: CiptaKaryaNavKey }) {
                     active={active === 'paket'}
                     href={paketIndex().url}
                 />
-                <NavRow icon={<IconDokumen />} label="Dokumen" />
-                <NavRow icon={<IconPembayaran />} label="Pembayaran" />
+                <NavRow
+                    icon={<IconDokumen />}
+                    label="Dokumen"
+                    active={active === 'dokumen'}
+                    href={dokumenIndex().url}
+                />
                 <NavRow
                     icon={<IconAudit />}
                     label="Mode audit"

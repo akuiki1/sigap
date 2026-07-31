@@ -28,10 +28,13 @@ export type Paket = {
     updated_at: string | null;
 };
 
-export type StatusOption = {
-    value: StatusPaket;
+/** Pilihan siap pakai untuk <select>, dikirim dari backend agar labelnya satu sumber. */
+export type Opsi<T extends string = string> = {
+    value: T;
     label: string;
 };
+
+export type StatusOption = Opsi<StatusPaket>;
 
 export type StatusDokumen = 'ada' | 'belum';
 
@@ -58,6 +61,44 @@ export type DokumenChecklistItem = {
     status: StatusDokumen;
     wajib: boolean;
     berkas: BerkasRingkas | null;
+};
+
+/**
+ * Ringkasan berkas terkini pada daftar dokumen lintas paket — lebih ramping
+ * dari BerkasRingkas: daftar itu tidak menampilkan catatan verifikasi.
+ */
+export type BerkasBaris = {
+    id: number;
+    nama_asli: string;
+    ukuran: number;
+    versi: number;
+    status_verifikasi: StatusVerifikasi;
+    status_verifikasi_label: string;
+    diunggah_oleh: string;
+};
+
+/** Satu baris pada halaman Dokumen: item checklist beserta paket pemiliknya. */
+export type DokumenBaris = {
+    id: number;
+    nama: string;
+    tahap: string;
+    wajib: boolean;
+    status: StatusDokumen;
+    status_label: string;
+    paket_id: number;
+    paket_nama: string;
+    paket_kode: string;
+    paket_tahun: number;
+    berkas: BerkasBaris | null;
+};
+
+/** Filter aktif halaman Dokumen, dikirim balik agar kontrolnya tetap terisi. */
+export type DokumenFilters = {
+    tahap: string | null;
+    status: StatusDokumen | null;
+    verifikasi: StatusVerifikasi | null;
+    tahun: number | null;
+    q: string | null;
 };
 
 /** Satu tahap ("Persiapan & anggaran", dst.) beserta checklist dokumennya. */

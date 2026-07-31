@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DokumenController;
 use App\Http\Controllers\DokumenPaketController;
 use App\Http\Controllers\PaketController;
 use App\Http\Controllers\ProgresPaketController;
@@ -35,6 +36,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('paket.koordinat.store');
     Route::delete('koordinat/{titikKoordinat}', [TitikKoordinatPaketController::class, 'destroy'])
         ->name('koordinat.destroy');
+
+    Route::get('dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
 
     Route::get('audit', [AuditController::class, 'review'])->name('audit.review');
 });
