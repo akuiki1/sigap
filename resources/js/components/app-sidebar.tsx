@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { Folder, Home, Search } from 'lucide-react';
+import { FileText, Folder, Home, Search } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -14,11 +14,13 @@ import {
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
 import { review } from '@/routes/audit';
+import { index as dokumenIndex } from '@/routes/dokumen';
 import { index as paketIndex } from '@/routes/paket';
 import type { NavItem } from '@/types';
 
-// Label disamakan persis dengan CiptaKaryaSidebar (dashboard/paket/audit)
-// supaya berpindah ke Settings tidak terasa seperti masuk aplikasi lain.
+// Label & urutan disamakan persis dengan CiptaKaryaSidebar (ringkasan/paket/
+// dokumen/audit) supaya berpindah ke Settings tidak terasa seperti masuk
+// aplikasi lain. Menambah menu di satu sisi berarti menambahnya di sini juga.
 const mainNavItems: NavItem[] = [
     {
         title: 'Ringkasan',
@@ -29,6 +31,11 @@ const mainNavItems: NavItem[] = [
         title: 'Paket',
         href: paketIndex(),
         icon: Folder,
+    },
+    {
+        title: 'Dokumen',
+        href: dokumenIndex(),
+        icon: FileText,
     },
     {
         title: 'Mode audit',

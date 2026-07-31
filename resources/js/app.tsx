@@ -20,6 +20,7 @@ createInertiaApp({
             // AppLayout/AppSidebar standar seperti halaman lain.
             case name === 'dashboard':
             case name.startsWith('paket/'):
+            case name.startsWith('dokumen/'):
             case name === 'audit/review':
                 return null;
             // Halaman Masuk juga membawa shell sendiri (panel kiri bergradasi
