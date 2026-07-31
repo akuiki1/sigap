@@ -1,11 +1,11 @@
 import { Head, Link, usePage } from '@inertiajs/react';
+import { CkCard, CkRow, CkChevron } from '@/components/cipta-karya/primitives';
+import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
+import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
 import { PaketStatusBadge } from '@/components/paket-status-badge';
 import { formatCurrency } from '@/lib/utils';
 import { create, index, show } from '@/routes/paket';
 import type { Paginated, Paket } from '@/types';
-import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
-import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import { CkCard, CkRow, CkChevron } from '@/components/cipta-karya/primitives';
 
 export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
     const { auth } = usePage().props;
@@ -125,12 +125,15 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                             href={show(paket.id).url}
                                             first={i === 0}
                                         >
-                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div
+                                                style={{ flex: 1, minWidth: 0 }}
+                                            >
                                                 <div
                                                     style={{
                                                         fontSize: 15.5,
                                                         fontWeight: 580,
-                                                        letterSpacing: '-.015em',
+                                                        letterSpacing:
+                                                            '-.015em',
                                                         color: ckColors.text,
                                                     }}
                                                 >
@@ -148,9 +151,11 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                                 >
                                                     <span
                                                         style={{
-                                                            fontFamily: 'monospace',
+                                                            fontFamily:
+                                                                'monospace',
                                                             fontSize: 11,
-                                                            background: 'rgba(0,0,0,.04)',
+                                                            background:
+                                                                'rgba(0,0,0,.04)',
                                                             padding: '1px 5px',
                                                             borderRadius: 4,
                                                             color: ckColors.textMuted,
@@ -159,11 +164,19 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                                         {paket.kode_paket}
                                                     </span>
                                                     <span>•</span>
-                                                    <span>{formatCurrency(paket.nilai_kontrak)}</span>
+                                                    <span>
+                                                        {formatCurrency(
+                                                            paket.nilai_kontrak,
+                                                        )}
+                                                    </span>
                                                     {paket.penyedia && (
                                                         <>
                                                             <span>•</span>
-                                                            <span style={{ color: ckColors.textMuted }}>
+                                                            <span
+                                                                style={{
+                                                                    color: ckColors.textMuted,
+                                                                }}
+                                                            >
                                                                 {paket.penyedia}
                                                             </span>
                                                         </>
@@ -177,7 +190,12 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                                     gap: 16,
                                                 }}
                                             >
-                                                <div style={{ textAlign: 'right', lineHeight: 1.3 }}>
+                                                <div
+                                                    style={{
+                                                        textAlign: 'right',
+                                                        lineHeight: 1.3,
+                                                    }}
+                                                >
                                                     <div
                                                         style={{
                                                             fontSize: 14.5,
@@ -197,8 +215,15 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                                         Fisik
                                                     </div>
                                                 </div>
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <PaketStatusBadge status={paket.status} />
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    <PaketStatusBadge
+                                                        status={paket.status}
+                                                    />
                                                 </div>
                                                 <CkChevron />
                                             </div>
@@ -217,15 +242,23 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                         padding: '0 4px',
                                     }}
                                 >
-                                    <p style={{ fontSize: 13.5, color: ckColors.textMuted }}>
-                                        Menampilkan {from ?? 0}–{to ?? 0} dari {total} paket
+                                    <p
+                                        style={{
+                                            fontSize: 13.5,
+                                            color: ckColors.textMuted,
+                                        }}
+                                    >
+                                        Menampilkan {from ?? 0}–{to ?? 0} dari{' '}
+                                        {total} paket
                                     </p>
 
                                     <div style={{ display: 'flex', gap: 8 }}>
                                         {current_page > 1 ? (
                                             <Link
                                                 href={index({
-                                                    query: { page: current_page - 1 },
+                                                    query: {
+                                                        page: current_page - 1,
+                                                    },
                                                 })}
                                                 className="ck-btn-accent"
                                                 style={{
@@ -263,7 +296,9 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                         {current_page < last_page ? (
                                             <Link
                                                 href={index({
-                                                    query: { page: current_page + 1 },
+                                                    query: {
+                                                        page: current_page + 1,
+                                                    },
                                                 })}
                                                 className="ck-btn-accent"
                                                 style={{

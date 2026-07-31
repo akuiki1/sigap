@@ -1,11 +1,10 @@
 import { Head } from '@inertiajs/react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
-import { PaketForm } from '@/components/paket-form';
-import { create, index } from '@/routes/paket';
-import type { StatusOption } from '@/types';
+import { CkCard } from '@/components/cipta-karya/primitives';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import { CkCard } from '@/components/cipta-karya/primitives';
+import { PaketForm } from '@/components/paket-form';
+import type { StatusOption } from '@/types';
 
 export default function PaketCreate({
     statusOptions,

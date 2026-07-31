@@ -1,10 +1,10 @@
 import { Head } from '@inertiajs/react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
-import { PaketForm } from '@/components/paket-form';
-import type { Paket, StatusOption } from '@/types';
+import { CkCard } from '@/components/cipta-karya/primitives';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import { CkCard } from '@/components/cipta-karya/primitives';
+import { PaketForm } from '@/components/paket-form';
+import type { Paket, StatusOption } from '@/types';
 
 export default function PaketEdit({
     paket,
@@ -74,7 +74,9 @@ export default function PaketEdit({
 
                             <CkCard padded={true}>
                                 <PaketForm
-                                    action={PaketController.update.form(paket.id)}
+                                    action={PaketController.update.form(
+                                        paket.id,
+                                    )}
                                     statusOptions={statusOptions}
                                     submitLabel="Simpan Perubahan"
                                     paket={paket}

@@ -1,12 +1,11 @@
-import { Head, Link } from '@inertiajs/react';
-import { PaketStatusBadge } from '@/components/paket-status-badge';
-import { formatCurrency, formatDate } from '@/lib/utils';
-import { review } from '@/routes/audit';
-import { show } from '@/routes/paket';
-import type { Paket } from '@/types';
+import { Head } from '@inertiajs/react';
+import { CkCard, CkRow, CkChevron } from '@/components/cipta-karya/primitives';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import { CkCard, CkRow, CkChevron } from '@/components/cipta-karya/primitives';
+import { PaketStatusBadge } from '@/components/paket-status-badge';
+import { formatCurrency, formatDate } from '@/lib/utils';
+import { show } from '@/routes/paket';
+import type { Paket } from '@/types';
 
 export default function AuditReview({ pakets }: { pakets: Paket[] }) {
     return (
@@ -73,7 +72,8 @@ export default function AuditReview({ pakets }: { pakets: Paket[] }) {
                                         margin: '4px 0 0 0',
                                     }}
                                 >
-                                    {pakets.length} paket sedang dalam status menunggu peninjauan audit.
+                                    {pakets.length} paket sedang dalam status
+                                    menunggu peninjauan audit.
                                 </p>
                             </header>
 
@@ -87,7 +87,8 @@ export default function AuditReview({ pakets }: { pakets: Paket[] }) {
                                             textAlign: 'center',
                                         }}
                                     >
-                                        Tidak ada paket yang menunggu audit saat ini.
+                                        Tidak ada paket yang menunggu audit saat
+                                        ini.
                                     </div>
                                 ) : (
                                     pakets.map((paket, i) => (
@@ -96,12 +97,15 @@ export default function AuditReview({ pakets }: { pakets: Paket[] }) {
                                             href={show(paket.id).url}
                                             first={i === 0}
                                         >
-                                            <div style={{ flex: 1, minWidth: 0 }}>
+                                            <div
+                                                style={{ flex: 1, minWidth: 0 }}
+                                            >
                                                 <div
                                                     style={{
                                                         fontSize: 15.5,
                                                         fontWeight: 580,
-                                                        letterSpacing: '-.015em',
+                                                        letterSpacing:
+                                                            '-.015em',
                                                         color: ckColors.text,
                                                     }}
                                                 >
@@ -119,9 +123,11 @@ export default function AuditReview({ pakets }: { pakets: Paket[] }) {
                                                 >
                                                     <span
                                                         style={{
-                                                            fontFamily: 'monospace',
+                                                            fontFamily:
+                                                                'monospace',
                                                             fontSize: 11,
-                                                            background: 'rgba(0,0,0,.04)',
+                                                            background:
+                                                                'rgba(0,0,0,.04)',
                                                             padding: '1px 5px',
                                                             borderRadius: 4,
                                                             color: ckColors.textMuted,
@@ -130,12 +136,19 @@ export default function AuditReview({ pakets }: { pakets: Paket[] }) {
                                                         {paket.kode_paket}
                                                     </span>
                                                     <span>•</span>
-                                                    <span>{formatCurrency(paket.nilai_kontrak)}</span>
+                                                    <span>
+                                                        {formatCurrency(
+                                                            paket.nilai_kontrak,
+                                                        )}
+                                                    </span>
                                                     {paket.tanggal_selesai && (
                                                         <>
                                                             <span>•</span>
                                                             <span>
-                                                                Selesai: {formatDate(paket.tanggal_selesai)}
+                                                                Selesai:{' '}
+                                                                {formatDate(
+                                                                    paket.tanggal_selesai,
+                                                                )}
                                                             </span>
                                                         </>
                                                     )}
@@ -148,8 +161,15 @@ export default function AuditReview({ pakets }: { pakets: Paket[] }) {
                                                     gap: 16,
                                                 }}
                                             >
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <PaketStatusBadge status={paket.status} />
+                                                <div
+                                                    style={{
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                    }}
+                                                >
+                                                    <PaketStatusBadge
+                                                        status={paket.status}
+                                                    />
                                                 </div>
                                                 <CkChevron />
                                             </div>

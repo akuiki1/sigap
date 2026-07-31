@@ -1,4 +1,5 @@
 import { Form, Link } from '@inertiajs/react';
+import { ckColors } from '@/components/cipta-karya/tokens';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +14,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { index } from '@/routes/paket';
 import type { Paket, StatusOption } from '@/types';
 import type { RouteFormDefinition } from '@/wayfinder';
-import { ckColors } from '@/components/cipta-karya/tokens';
 
 type PaketFormProps = {
     action: RouteFormDefinition<'post'> | RouteFormDefinition<'put'>;
