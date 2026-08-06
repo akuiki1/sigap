@@ -1,6 +1,6 @@
 # SIGAP
 
-Sistem pencatatan proyek gedung **Dinas PUPR Cipta Karya Kab. Hulu Sungai Tengah**. Laravel 12 + Inertia + React (TypeScript) + shadcn/ui. Bahasa domain (tabel, kolom, komponen, komentar) memakai **bahasa Indonesia**; kode framework tetap Inggris.
+Sistem pencatatan proyek gedung **Dinas PUPR Cipta Karya Kab. Hulu Sungai Tengah**. Laravel 13 + Inertia + React (TypeScript) + shadcn/ui. Bahasa domain (tabel, kolom, komponen, komentar) memakai **bahasa Indonesia**; kode framework tetap Inggris.
 
 ## Perintah
 
