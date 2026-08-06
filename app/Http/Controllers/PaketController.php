@@ -70,7 +70,7 @@ class PaketController extends Controller
         $paket->load([
             'dokumenPaket.checklistDokumen',
             'dokumenPaket.berkasTerkini.uploadedBy',
-            'dokumenPaket.berkasTerkini.verifiedBy',
+            'dokumenPaket.berkasTerkini.diverifikasiOleh',
             'progresPaket' => fn ($query) => $query->latest('tanggal')->latest('id'),
             'progresPaket.foto',
             'progresPaket.dilaporkanOleh',
@@ -180,7 +180,7 @@ class PaketController extends Controller
             'catatan_verifikasi' => $berkas->catatan_verifikasi,
             'diunggah_oleh' => $berkas->uploadedBy->name,
             'diunggah_pada' => $berkas->created_at?->toIso8601String(),
-            'diverifikasi_oleh' => $berkas->verifiedBy?->name,
+            'diverifikasi_oleh' => $berkas->diverifikasiOleh?->name,
         ];
     }
 

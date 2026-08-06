@@ -188,8 +188,8 @@ class DatabaseSeeder extends Seeder
                 'mime_type' => 'application/pdf',
                 'status_verifikasi' => $diverifikasi ? 'diverifikasi' : 'diajukan',
                 'uploaded_by' => $operator->id,
-                'verified_by' => $diverifikasi ? $pengawas->id : null,
-                'verified_at' => $diverifikasi ? $now : null,
+                'diverifikasi_by' => $diverifikasi ? $pengawas->id : null,
+                'diverifikasi_pada' => $diverifikasi ? $now : null,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

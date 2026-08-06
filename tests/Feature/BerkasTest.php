@@ -153,8 +153,8 @@ class BerkasTest extends TestCase
 
         $berkas->refresh();
         $this->assertSame('diverifikasi', $berkas->status_verifikasi->value);
-        $this->assertNotNull($berkas->verified_by);
-        $this->assertNotNull($berkas->verified_at);
+        $this->assertNotNull($berkas->diverifikasi_by);
+        $this->assertNotNull($berkas->diverifikasi_pada);
         $this->assertSame(
             StatusDokumen::Ada,
             $berkas->attachable->fresh()->status,

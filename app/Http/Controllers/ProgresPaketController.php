@@ -56,14 +56,13 @@ class ProgresPaketController extends Controller
      */
     public function verify(ProgresPaketVerifyRequest $request, ProgresPaket $progresPaket): RedirectResponse
     {
-        $keputusan = StatusVerifikasi::from($request->validated('keputusan'));
+        $keputusan = $request->keputusan();
 
-        $progresPaket->update([
-            'status_verifikasi' => $keputusan,
-            'catatan_verifikasi' => $request->validated('catatan_verifikasi'),
-            'diverifikasi_by' => $request->user()->id,
-            'diverifikasi_pada' => now(),
-        ]);
+        $progresPaket->tandaiVerifikasi(
+            $keputusan,
+            $request->validated('catatan_verifikasi'),
+            $request->user(),
+        );
 
         Inertia::flash('toast', [
             'type' => $keputusan === StatusVerifikasi::Diverifikasi ? 'success' : 'warning',

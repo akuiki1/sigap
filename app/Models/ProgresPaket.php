@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusVerifikasi;
+use App\Models\Concerns\DapatDiverifikasi;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -28,12 +29,13 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $diverifikasiOleh
  * @property-read Collection<int, Berkas> $foto
  */
-#[Fillable([
-    'tanggal', 'persentase', 'keterangan', 'status_verifikasi', 'dilaporkan_by',
-    'catatan_verifikasi', 'diverifikasi_by', 'diverifikasi_pada',
-])]
+// Kolom verifikasi tidak disebut di sini — DapatDiverifikasi yang
+// mendaftarkannya, lihat catatan di trait itu.
+#[Fillable(['tanggal', 'persentase', 'keterangan', 'dilaporkan_by'])]
 class ProgresPaket extends Model
 {
+    use DapatDiverifikasi;
+
     protected $table = 'progres_paket';
 
     /**
@@ -46,8 +48,6 @@ class ProgresPaket extends Model
         return [
             'tanggal' => 'date:Y-m-d',
             'persentase' => 'integer',
-            'status_verifikasi' => StatusVerifikasi::class,
-            'diverifikasi_pada' => 'datetime',
         ];
     }
 
@@ -65,14 +65,6 @@ class ProgresPaket extends Model
     public function dilaporkanOleh(): BelongsTo
     {
         return $this->belongsTo(User::class, 'dilaporkan_by');
-    }
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function diverifikasiOleh(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'diverifikasi_by');
     }
 
     /**

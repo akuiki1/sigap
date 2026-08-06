@@ -67,14 +67,13 @@ class BerkasController extends Controller
      */
     public function verify(BerkasVerifyRequest $request, Berkas $berkas): RedirectResponse
     {
-        $keputusan = StatusVerifikasi::from($request->validated('keputusan'));
+        $keputusan = $request->keputusan();
 
-        $berkas->update([
-            'status_verifikasi' => $keputusan,
-            'catatan_verifikasi' => $request->validated('catatan_verifikasi'),
-            'verified_by' => $request->user()->id,
-            'verified_at' => now(),
-        ]);
+        $berkas->tandaiVerifikasi(
+            $keputusan,
+            $request->validated('catatan_verifikasi'),
+            $request->user(),
+        );
 
         if ($keputusan === StatusVerifikasi::Ditolak && $berkas->attachable instanceof DokumenPaket) {
             $berkas->attachable->update(['status' => StatusDokumen::Belum]);

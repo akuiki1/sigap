@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StatusVerifikasi;
+use App\Models\Concerns\DapatDiverifikasi;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,20 +23,24 @@ use Illuminate\Support\Carbon;
  * @property StatusVerifikasi $status_verifikasi
  * @property string|null $catatan_verifikasi
  * @property int $uploaded_by
- * @property int|null $verified_by
- * @property Carbon|null $verified_at
+ * @property int|null $diverifikasi_by
+ * @property Carbon|null $diverifikasi_pada
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Model $attachable
  * @property-read User $uploadedBy
- * @property-read User|null $verifiedBy
+ * @property-read User|null $diverifikasiOleh
  */
+// Kolom verifikasi (status_verifikasi, catatan_verifikasi, diverifikasi_by,
+// diverifikasi_pada) tidak disebut di sini — DapatDiverifikasi yang
+// mendaftarkannya, lihat catatan di trait itu.
 #[Fillable([
-    'file_path', 'nama_asli', 'ukuran', 'mime_type', 'versi', 'is_terkini',
-    'status_verifikasi', 'uploaded_by', 'catatan_verifikasi', 'verified_by', 'verified_at',
+    'file_path', 'nama_asli', 'ukuran', 'mime_type', 'versi', 'is_terkini', 'uploaded_by',
 ])]
 class Berkas extends Model
 {
+    use DapatDiverifikasi;
+
     protected $table = 'berkas';
 
     /**
@@ -49,8 +54,6 @@ class Berkas extends Model
             'versi' => 'integer',
             'is_terkini' => 'boolean',
             'ukuran' => 'integer',
-            'status_verifikasi' => StatusVerifikasi::class,
-            'verified_at' => 'datetime',
         ];
     }
 
@@ -68,13 +71,5 @@ class Berkas extends Model
     public function uploadedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
-    }
-
-    /**
-     * @return BelongsTo<User, $this>
-     */
-    public function verifiedBy(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'verified_by');
     }
 }
