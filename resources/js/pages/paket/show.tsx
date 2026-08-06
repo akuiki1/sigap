@@ -1,5 +1,5 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
 import { ChecklistItemRow } from '@/components/cipta-karya/checklist-item';
 import '@/components/cipta-karya/cipta-karya.css';
@@ -13,13 +13,14 @@ import {
     CkDialogTitle,
     CkDialogTrigger,
 } from '@/components/cipta-karya/ck-dialog';
+import { InformasiPaket } from '@/components/cipta-karya/informasi-paket';
+import { LinimasaTahapan } from '@/components/cipta-karya/linimasa-tahapan';
 import { PetaKoordinat } from '@/components/cipta-karya/peta-koordinat';
 import { CkCard, CkSectionLabel } from '@/components/cipta-karya/primitives';
 import { ProgresRiwayat } from '@/components/cipta-karya/progres-riwayat';
 import { SCurveChart } from '@/components/cipta-karya/s-curve-chart';
 import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
 import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import { formatCurrency } from '@/lib/utils';
 import { dashboard } from '@/routes';
 import paket, { edit, index } from '@/routes/paket';
 import type {
@@ -43,100 +44,6 @@ type PaketShowProps = {
     titikKoordinat: TitikKoordinat[];
 };
 
-function formatShortDate(value: string | null): string {
-    if (!value) {
-        return '—';
-    }
-
-    return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit',
-        month: 'short',
-    }).format(new Date(value));
-}
-
-type StepState = 'done' | 'current' | 'pending';
-
-function TimelineStep({
-    label,
-    dateLabel,
-    state,
-}: {
-    label: string;
-    dateLabel: string;
-    state: StepState;
-}) {
-    return (
-        <div
-            style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 9,
-                flex: 'none',
-                width: 72,
-                textAlign: 'center',
-            }}
-        >
-            <span
-                style={{
-                    width: 15,
-                    height: 15,
-                    borderRadius: '50%',
-                    background:
-                        state === 'pending'
-                            ? '#DCDAD4'
-                            : state === 'current'
-                              ? '#fff'
-                              : ckColors.accent,
-                    border:
-                        state === 'current'
-                            ? `4px solid ${ckColors.accent}`
-                            : undefined,
-                    boxSizing: 'border-box',
-                }}
-            />
-            <div style={{ lineHeight: 1.3 }}>
-                <div
-                    style={{
-                        fontSize: 12.5,
-                        fontWeight: 590,
-                        color: state === 'pending' ? '#B4B2AC' : ckColors.text,
-                    }}
-                >
-                    {label}
-                </div>
-                <div
-                    style={{
-                        fontSize: 11.5,
-                        color: state === 'pending' ? '#B4B2AC' : '#9C9A94',
-                        marginTop: 1,
-                    }}
-                >
-                    {dateLabel}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function TimelineConnector({ state }: { state: StepState }) {
-    return (
-        <div
-            style={{
-                flex: 1,
-                height: 2,
-                marginTop: 6.5,
-                background:
-                    state === 'done'
-                        ? ckColors.accent
-                        : state === 'current'
-                          ? `linear-gradient(90deg, ${ckColors.accent}, #DCDAD4)`
-                          : '#DCDAD4',
-            }}
-        />
-    );
-}
-
 export default function PaketShow({
     paket: data,
     statusLabel,
@@ -150,25 +57,6 @@ export default function PaketShow({
 }: PaketShowProps) {
     const { auth } = usePage().props;
     const [pendingDoc, setPendingDoc] = useState<number | null>(null);
-
-    const now = new Date();
-    const milestones: { key: string; label: string; date: string | null }[] = [
-        { key: 'kontrak', label: 'Kontrak', date: data.tanggal_kontrak },
-        { key: 'spmk', label: 'SPMK', date: data.tanggal_spmk },
-        { key: 'mc0', label: 'MC-0', date: data.tanggal_mc0 },
-        { key: 'pho', label: 'PHO', date: data.tanggal_pho_rencana },
-    ];
-    let currentIndex = milestones.findIndex(
-        (m) => !m.date || new Date(m.date) > now,
-    );
-
-    if (currentIndex === -1) {
-        currentIndex = milestones.length; // semua sudah lewat
-    }
-
-    const stepStates: StepState[] = milestones.map((_, i) =>
-        i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'pending',
-    );
 
     /**
      * Kembalikan satu item checklist ke "belum". Tidak ada arah sebaliknya di
@@ -418,36 +306,7 @@ export default function PaketShow({
                         </section>
 
                         <section style={{ marginTop: 26 }}>
-                            <CkCard padded>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'flex-start',
-                                        justifyContent: 'space-between',
-                                        gap: 6,
-                                    }}
-                                >
-                                    {milestones.map((m, i) => (
-                                        <Fragment key={m.key}>
-                                            <TimelineStep
-                                                label={m.label}
-                                                dateLabel={formatShortDate(
-                                                    m.date,
-                                                )}
-                                                state={stepStates[i]}
-                                            />
-                                            <TimelineConnector
-                                                state={stepStates[i]}
-                                            />
-                                        </Fragment>
-                                    ))}
-                                    <TimelineStep
-                                        label="FHO"
-                                        dateLabel="—"
-                                        state="pending"
-                                    />
-                                </div>
-                            </CkCard>
+                            <LinimasaTahapan paket={data} />
                         </section>
 
                         <section
@@ -461,75 +320,10 @@ export default function PaketShow({
                             }}
                         >
                             <div>
-                                <CkSectionLabel>Informasi paket</CkSectionLabel>
-                                <CkCard>
-                                    {[
-                                        [
-                                            'Sumber dana',
-                                            data.sumber_dana ?? '—',
-                                        ],
-                                        [
-                                            'Pagu',
-                                            data.pagu !== null
-                                                ? formatCurrency(data.pagu)
-                                                : '—',
-                                        ],
-                                        [
-                                            'Nilai kontrak',
-                                            formatCurrency(data.nilai_kontrak),
-                                        ],
-                                        ['Penyedia', data.penyedia ?? '—'],
-                                        [
-                                            'Konsultan pengawas',
-                                            data.konsultan_pengawas ?? '—',
-                                        ],
-                                        ['PPK', data.ppk ?? '—'],
-                                        ['PPTK', data.pptk ?? '—'],
-                                        ['No. kontrak', data.no_kontrak ?? '—'],
-                                        [
-                                            'Masa pelaksanaan',
-                                            masaPelaksanaan ?? '—',
-                                        ],
-                                    ].map(([label, value], i) => (
-                                        <div
-                                            key={label}
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: 16,
-                                                padding: '13px 18px',
-                                                borderTop:
-                                                    i === 0
-                                                        ? undefined
-                                                        : `1px solid ${ckColors.border}`,
-                                            }}
-                                        >
-                                            <div
-                                                style={{
-                                                    fontSize: 14,
-                                                    color: ckColors.textMuted,
-                                                    flex: 'none',
-                                                }}
-                                            >
-                                                {label}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    flex: 1,
-                                                    minWidth: 0,
-                                                    textAlign: 'right',
-                                                    fontSize: 14,
-                                                    fontWeight: 510,
-                                                    color: ckColors.text,
-                                                    fontVariantNumeric:
-                                                        'tabular-nums',
-                                                }}
-                                            >
-                                                {value}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </CkCard>
+                                <InformasiPaket
+                                    paket={data}
+                                    masaPelaksanaan={masaPelaksanaan}
+                                />
 
                                 <CkSectionLabel
                                     style={{ margin: '26px 0 8px 6px' }}
