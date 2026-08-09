@@ -6,8 +6,8 @@ import {
     CkChevron,
     VerifikasiBadge,
 } from '@/components/cipta-karya/primitives';
-import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
-import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
+import { CiptaKaryaShell } from '@/components/cipta-karya/shell';
+import { ckColors } from '@/components/cipta-karya/tokens';
 import { formatFileSize } from '@/lib/utils';
 import { download } from '@/routes/berkas';
 import { index } from '@/routes/dokumen';
@@ -100,287 +100,265 @@ export default function DokumenIndex({
         <>
             <Head title="Dokumen" />
 
-            <div
-                style={{
-                    display: 'flex',
-                    height: '100vh',
-                    width: '100%',
-                    background: ckColors.bg,
-                    color: ckColors.text,
-                    overflow: 'hidden',
-                    fontFamily: ckFont,
-                    WebkitFontSmoothing: 'antialiased',
-                }}
-            >
-                <CiptaKaryaSidebar active="dokumen" />
-
-                <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
-                    <div
-                        style={{
-                            maxWidth: 1180,
-                            margin: '0 auto',
-                            padding: '40px 48px 72px',
-                        }}
-                    >
-                        <div className="flex flex-col gap-6">
-                            <header
+            <CiptaKaryaShell active="dokumen">
+                <div
+                    style={{
+                        maxWidth: 1180,
+                        margin: '0 auto',
+                        padding: '38px 40px 72px',
+                    }}
+                >
+                    <div className="flex flex-col gap-6">
+                        <header
+                            style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 4,
+                                marginBottom: 8,
+                            }}
+                        >
+                            <div
                                 style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    gap: 4,
-                                    marginBottom: 8,
+                                    fontSize: 13,
+                                    fontWeight: 520,
+                                    color: ckColors.textMuted,
+                                    letterSpacing: '.01em',
                                 }}
                             >
+                                Kelengkapan Dokumen · Bidang Cipta Karya
+                            </div>
+                            <h1
+                                style={{
+                                    fontSize: 28,
+                                    fontWeight: 680,
+                                    letterSpacing: '-.025em',
+                                    color: ckColors.text,
+                                    marginTop: 3,
+                                    marginBottom: 0,
+                                }}
+                            >
+                                Dokumen
+                            </h1>
+                            <p
+                                style={{
+                                    fontSize: 14.5,
+                                    color: ckColors.textMuted,
+                                    margin: '4px 0 0 0',
+                                }}
+                            >
+                                Telusuri checklist dokumen dari seluruh paket
+                                dalam satu daftar.
+                            </p>
+                        </header>
+
+                        <CkCard padded>
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    flexWrap: 'wrap',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                }}
+                            >
+                                <input
+                                    className="ck-kontrol"
+                                    type="search"
+                                    value={cari}
+                                    placeholder="Cari dokumen atau paket…"
+                                    onChange={(e) => setCari(e.target.value)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            terapkan({
+                                                q: cari.trim() || null,
+                                            });
+                                        }
+                                    }}
+                                    onBlur={() =>
+                                        terapkan({ q: cari.trim() || null })
+                                    }
+                                    style={{
+                                        ...kontrolStyle,
+                                        flex: 1,
+                                        minWidth: 200,
+                                    }}
+                                />
+
+                                <select
+                                    className="ck-kontrol"
+                                    value={filters.tahap ?? SEMUA}
+                                    onChange={(e) =>
+                                        terapkan({
+                                            tahap: e.target.value || null,
+                                        })
+                                    }
+                                    style={kontrolStyle}
+                                >
+                                    <option value={SEMUA}>Semua tahap</option>
+                                    {tahapOptions.map((tahap) => (
+                                        <option key={tahap} value={tahap}>
+                                            {tahap}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    className="ck-kontrol"
+                                    value={filters.status ?? SEMUA}
+                                    onChange={(e) =>
+                                        terapkan({
+                                            status: e.target.value || null,
+                                        })
+                                    }
+                                    style={kontrolStyle}
+                                >
+                                    <option value={SEMUA}>Ada & belum</option>
+                                    {statusOptions.map((opsi) => (
+                                        <option
+                                            key={opsi.value}
+                                            value={opsi.value}
+                                        >
+                                            {opsi.label}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    className="ck-kontrol"
+                                    value={filters.verifikasi ?? SEMUA}
+                                    onChange={(e) =>
+                                        terapkan({
+                                            verifikasi: e.target.value || null,
+                                        })
+                                    }
+                                    style={kontrolStyle}
+                                >
+                                    <option value={SEMUA}>
+                                        Semua verifikasi
+                                    </option>
+                                    {verifikasiOptions.map((opsi) => (
+                                        <option
+                                            key={opsi.value}
+                                            value={opsi.value}
+                                        >
+                                            {opsi.label}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select
+                                    className="ck-kontrol"
+                                    value={filters.tahun ?? SEMUA}
+                                    onChange={(e) =>
+                                        terapkan({
+                                            tahun: e.target.value || null,
+                                        })
+                                    }
+                                    style={kontrolStyle}
+                                >
+                                    <option value={SEMUA}>Semua TA</option>
+                                    {tahunOptions.map((tahun) => (
+                                        <option key={tahun} value={tahun}>
+                                            TA {tahun}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                {adaFilter && (
+                                    <button
+                                        type="button"
+                                        className="ck-link-accent"
+                                        onClick={() => {
+                                            setCari('');
+                                            router.get(
+                                                index().url,
+                                                {},
+                                                {
+                                                    preserveScroll: true,
+                                                    replace: true,
+                                                },
+                                            );
+                                        }}
+                                        style={{
+                                            border: 'none',
+                                            background: 'none',
+                                            padding: '7px 4px',
+                                            cursor: 'pointer',
+                                            font: 'inherit',
+                                            fontSize: 13,
+                                            fontWeight: 540,
+                                            color: ckColors.accent,
+                                        }}
+                                    >
+                                        Bersihkan
+                                    </button>
+                                )}
+                            </div>
+                        </CkCard>
+
+                        <CkCard>
+                            {data.length === 0 ? (
                                 <div
                                     style={{
-                                        fontSize: 13,
-                                        fontWeight: 520,
-                                        color: ckColors.textMuted,
-                                        letterSpacing: '.01em',
-                                    }}
-                                >
-                                    Kelengkapan Dokumen · Bidang Cipta Karya
-                                </div>
-                                <h1
-                                    style={{
-                                        fontSize: 28,
-                                        fontWeight: 680,
-                                        letterSpacing: '-.025em',
-                                        color: ckColors.text,
-                                        marginTop: 3,
-                                        marginBottom: 0,
-                                    }}
-                                >
-                                    Dokumen
-                                </h1>
-                                <p
-                                    style={{
+                                        padding: '36px 18px',
                                         fontSize: 14.5,
                                         color: ckColors.textMuted,
-                                        margin: '4px 0 0 0',
+                                        textAlign: 'center',
                                     }}
                                 >
-                                    Telusuri checklist dokumen dari seluruh
-                                    paket dalam satu daftar.
-                                </p>
-                            </header>
-
-                            <CkCard padded>
-                                <div
-                                    style={{
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        alignItems: 'center',
-                                        gap: 8,
-                                    }}
-                                >
-                                    <input
-                                        className="ck-kontrol"
-                                        type="search"
-                                        value={cari}
-                                        placeholder="Cari dokumen atau paket…"
-                                        onChange={(e) =>
-                                            setCari(e.target.value)
-                                        }
-                                        onKeyDown={(e) => {
-                                            if (e.key === 'Enter') {
-                                                terapkan({
-                                                    q: cari.trim() || null,
-                                                });
-                                            }
-                                        }}
-                                        onBlur={() =>
-                                            terapkan({ q: cari.trim() || null })
-                                        }
-                                        style={{
-                                            ...kontrolStyle,
-                                            flex: 1,
-                                            minWidth: 200,
-                                        }}
+                                    {adaFilter
+                                        ? 'Tidak ada dokumen yang cocok dengan filter ini.'
+                                        : 'Belum ada checklist dokumen tercatat.'}
+                                </div>
+                            ) : (
+                                data.map((baris, i) => (
+                                    <BarisDokumen
+                                        key={baris.id}
+                                        baris={baris}
+                                        first={i === 0}
                                     />
+                                ))
+                            )}
+                        </CkCard>
 
-                                    <select
-                                        className="ck-kontrol"
-                                        value={filters.tahap ?? SEMUA}
-                                        onChange={(e) =>
-                                            terapkan({
-                                                tahap: e.target.value || null,
-                                            })
-                                        }
-                                        style={kontrolStyle}
-                                    >
-                                        <option value={SEMUA}>
-                                            Semua tahap
-                                        </option>
-                                        {tahapOptions.map((tahap) => (
-                                            <option key={tahap} value={tahap}>
-                                                {tahap}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        className="ck-kontrol"
-                                        value={filters.status ?? SEMUA}
-                                        onChange={(e) =>
-                                            terapkan({
-                                                status: e.target.value || null,
-                                            })
-                                        }
-                                        style={kontrolStyle}
-                                    >
-                                        <option value={SEMUA}>
-                                            Ada & belum
-                                        </option>
-                                        {statusOptions.map((opsi) => (
-                                            <option
-                                                key={opsi.value}
-                                                value={opsi.value}
-                                            >
-                                                {opsi.label}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        className="ck-kontrol"
-                                        value={filters.verifikasi ?? SEMUA}
-                                        onChange={(e) =>
-                                            terapkan({
-                                                verifikasi:
-                                                    e.target.value || null,
-                                            })
-                                        }
-                                        style={kontrolStyle}
-                                    >
-                                        <option value={SEMUA}>
-                                            Semua verifikasi
-                                        </option>
-                                        {verifikasiOptions.map((opsi) => (
-                                            <option
-                                                key={opsi.value}
-                                                value={opsi.value}
-                                            >
-                                                {opsi.label}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    <select
-                                        className="ck-kontrol"
-                                        value={filters.tahun ?? SEMUA}
-                                        onChange={(e) =>
-                                            terapkan({
-                                                tahun: e.target.value || null,
-                                            })
-                                        }
-                                        style={kontrolStyle}
-                                    >
-                                        <option value={SEMUA}>Semua TA</option>
-                                        {tahunOptions.map((tahun) => (
-                                            <option key={tahun} value={tahun}>
-                                                TA {tahun}
-                                            </option>
-                                        ))}
-                                    </select>
-
-                                    {adaFilter && (
-                                        <button
-                                            type="button"
-                                            className="ck-link-accent"
-                                            onClick={() => {
-                                                setCari('');
-                                                router.get(
-                                                    index().url,
-                                                    {},
-                                                    {
-                                                        preserveScroll: true,
-                                                        replace: true,
-                                                    },
-                                                );
-                                            }}
-                                            style={{
-                                                border: 'none',
-                                                background: 'none',
-                                                padding: '7px 4px',
-                                                cursor: 'pointer',
-                                                font: 'inherit',
-                                                fontSize: 13,
-                                                fontWeight: 540,
-                                                color: ckColors.accent,
-                                            }}
-                                        >
-                                            Bersihkan
-                                        </button>
-                                    )}
-                                </div>
-                            </CkCard>
-
-                            <CkCard>
-                                {data.length === 0 ? (
-                                    <div
-                                        style={{
-                                            padding: '36px 18px',
-                                            fontSize: 14.5,
-                                            color: ckColors.textMuted,
-                                            textAlign: 'center',
-                                        }}
-                                    >
-                                        {adaFilter
-                                            ? 'Tidak ada dokumen yang cocok dengan filter ini.'
-                                            : 'Belum ada checklist dokumen tercatat.'}
-                                    </div>
-                                ) : (
-                                    data.map((baris, i) => (
-                                        <BarisDokumen
-                                            key={baris.id}
-                                            baris={baris}
-                                            first={i === 0}
-                                        />
-                                    ))
-                                )}
-                            </CkCard>
-
-                            {last_page > 1 && (
-                                <div
+                        {last_page > 1 && (
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    marginTop: 8,
+                                    padding: '0 4px',
+                                }}
+                            >
+                                <p
                                     style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        marginTop: 8,
-                                        padding: '0 4px',
+                                        fontSize: 13.5,
+                                        color: ckColors.textMuted,
                                     }}
                                 >
-                                    <p
-                                        style={{
-                                            fontSize: 13.5,
-                                            color: ckColors.textMuted,
-                                        }}
-                                    >
-                                        Menampilkan {from ?? 0}–{to ?? 0} dari{' '}
-                                        {total} dokumen
-                                    </p>
+                                    Menampilkan {from ?? 0}–{to ?? 0} dari{' '}
+                                    {total} dokumen
+                                </p>
 
-                                    <div style={{ display: 'flex', gap: 8 }}>
-                                        <TombolHalaman
-                                            label="Sebelumnya"
-                                            halaman={current_page - 1}
-                                            aktif={current_page > 1}
-                                            filters={filters}
-                                        />
-                                        <TombolHalaman
-                                            label="Berikutnya"
-                                            halaman={current_page + 1}
-                                            aktif={current_page < last_page}
-                                            filters={filters}
-                                        />
-                                    </div>
+                                <div style={{ display: 'flex', gap: 8 }}>
+                                    <TombolHalaman
+                                        label="Sebelumnya"
+                                        halaman={current_page - 1}
+                                        aktif={current_page > 1}
+                                        filters={filters}
+                                    />
+                                    <TombolHalaman
+                                        label="Berikutnya"
+                                        halaman={current_page + 1}
+                                        aktif={current_page < last_page}
+                                        filters={filters}
+                                    />
                                 </div>
-                            )}
-                        </div>
+                            </div>
+                        )}
                     </div>
-                </main>
-            </div>
+                </div>
+            </CiptaKaryaShell>
         </>
     );
 }

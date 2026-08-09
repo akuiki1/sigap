@@ -100,4 +100,42 @@ class BerkasController extends Controller
 
         return Storage::disk('local')->download($berkas->file_path, $berkas->nama_asli);
     }
+
+    /**
+     * Jenis berkas yang aman disajikan inline (dirender di dalam halaman).
+     *
+     * Sengaja daftar putih, bukan daftar hitam: menyajikan berkas unggahan
+     * dengan Content-Disposition: inline berarti peramban boleh mengeksekusi
+     * isinya, sehingga satu berkas HTML/SVG yang lolos akan berjalan pada
+     * origin aplikasi. PDF & raster tidak punya masalah itu.
+     *
+     * @var list<string>
+     */
+    private const array MIME_PRATINJAU = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+    ];
+
+    /**
+     * Sajikan berkas untuk dipratinjau di dalam panel dokumen (Content-
+     * Disposition: inline), bukan diunduh. Terpisah dari download() karena
+     * kedua disposisi itu tidak bisa hidup di satu respons, dan pemisahan ini
+     * sekalian menjadi tempat menegakkan daftar putih jenis berkas di atas.
+     */
+    public function preview(Berkas $berkas): StreamedResponse
+    {
+        $this->authorize('download', $berkas);
+
+        if (! in_array($berkas->mime_type, self::MIME_PRATINJAU, true)) {
+            return Storage::disk('local')->download($berkas->file_path, $berkas->nama_asli);
+        }
+
+        return Storage::disk('local')->response($berkas->file_path, $berkas->nama_asli, [
+            'Content-Type' => $berkas->mime_type,
+            // Peramban tidak boleh menebak ulang jenis isinya dan berakhir
+            // mengeksekusi sesuatu yang bukan gambar/PDF.
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
 }

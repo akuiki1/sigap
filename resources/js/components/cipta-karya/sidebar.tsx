@@ -149,11 +149,15 @@ function NavRow({
                     alignItems: 'center',
                     gap: 12,
                     padding: '9px 12px',
-                    borderRadius: 10,
+                    borderRadius: 11,
                     fontSize: 14,
                     fontWeight: active ? 590 : 510,
                     letterSpacing: '-.01em',
-                    background: active ? ckColors.accentSoft : 'transparent',
+                    // Item aktif jadi kartu putih kecil di atas kanvas, bukan
+                    // blok bertint aksen: sidebar tak lagi punya latar sendiri,
+                    // jadi putih-lah yang membedakannya dari sekitarnya.
+                    background: active ? '#fff' : 'transparent',
+                    boxShadow: active ? ckColors.navActiveShadow : undefined,
                     color: active ? ckColors.accent : '#5F5D57',
                     cursor: 'pointer',
                     transition: 'background-color .12s ease',
@@ -174,15 +178,15 @@ export function CiptaKaryaSidebar({ active }: { active: CiptaKaryaNavKey }) {
     return (
         <aside
             style={{
-                width: 252,
+                width: 246,
                 flex: 'none',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '16px 12px 14px',
-                background: 'rgba(255,255,255,.72)',
-                backdropFilter: 'blur(28px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-                borderRight: `1px solid ${ckColors.borderSoft}`,
+                padding: '20px 14px 16px',
+                // Tanpa latar & garis pemisah: sidebar duduk langsung di kanvas
+                // aplikasi (ckColors.canvas), dipisahkan dari isi halaman oleh
+                // tepi panel utama yang mengambang — lihat CiptaKaryaShell.
+                background: 'transparent',
             }}
         >
             <div

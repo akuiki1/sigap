@@ -215,4 +215,55 @@ class BerkasTest extends TestCase
         $this->get(route('berkas.download', $berkas))
             ->assertRedirect(route('login'));
     }
+
+    public function test_preview_serves_pdf_inline_so_it_renders_in_the_panel(): void
+    {
+        $berkas = $this->uploadedBerkas();
+        $this->actingAs(User::factory()->auditor()->create());
+
+        $response = $this->get(route('berkas.preview', $berkas))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertHeader('x-content-type-options', 'nosniff');
+
+        $this->assertStringStartsWith(
+            'inline;',
+            (string) $response->headers->get('content-disposition'),
+        );
+    }
+
+    /**
+     * Jenis di luar daftar putih tetap turun sebagai unduhan: menyajikannya
+     * inline berarti peramban boleh mengeksekusi isinya pada origin aplikasi.
+     */
+    public function test_preview_falls_back_to_attachment_for_non_previewable_types(): void
+    {
+        Storage::fake('local');
+        $this->actingAs(User::factory()->operator()->create());
+
+        $paket = Paket::factory()->create();
+        $item = $this->checklistItem();
+
+        $this->post(route('paket.dokumen.berkas.store', ['paket' => $paket, 'checklistDokumen' => $item]), [
+            'file' => UploadedFile::fake()->create('rab.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'),
+        ]);
+
+        $berkas = DokumenPaket::firstWhere([
+            'paket_id' => $paket->id,
+            'checklist_dokumen_id' => $item->id,
+        ])->berkasTerkini;
+
+        $this->get(route('berkas.preview', $berkas))
+            ->assertOk()
+            ->assertDownload('rab.xlsx');
+    }
+
+    public function test_guests_cannot_preview_a_berkas(): void
+    {
+        $berkas = $this->uploadedBerkas();
+        $this->app['auth']->guard()->logout();
+
+        $this->get(route('berkas.preview', $berkas))
+            ->assertRedirect(route('login'));
+    }
 }

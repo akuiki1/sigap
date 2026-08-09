@@ -40,12 +40,15 @@ Belum ada: layar kelola user (peran hanya bisa diubah lewat tinker).
 - **`berkas`** — tabel lampiran polimorfik dipakai dua konsumen dengan semantik berbeda:
   - `dokumen_paket` (checklist dokumen) → **berversi**, `is_terkini` diarsipkan tiap unggah baru.
   - `progres_paket` (foto progres) → **tidak berversi**, semua foto satu entri berlaku sekaligus.
-  Alias morph didaftarkan di `AppServiceProvider::configureDefaults`. File disimpan di disk privat `local`, diunduh lewat route `berkas.download` (streaming), bukan URL publik.
+  Alias morph didaftarkan di `AppServiceProvider::configureDefaults`. File disimpan di disk privat `local`, diunduh lewat route `berkas.download` (streaming), bukan URL publik. Untuk dipratinjau di dalam halaman (PDF di `<iframe>`, foto di `<img>`) ada route kedua `berkas.preview` yang menyajikannya `inline` — disposisinya tidak bisa dua-duanya dalam satu respons. Jenis yang boleh inline dibatasi daftar putih PDF/JPEG/PNG di controller: menyajikan HTML/SVG unggahan secara inline berarti ia berjalan pada origin aplikasi.
 - **Verifikasi** (`App\Enums\StatusVerifikasi`: `diajukan → diverifikasi | ditolak`):
   - Untuk dokumen: unggah otomatis menyetel `dokumen_paket.status = ada`; **menolak mengembalikannya ke `belum`**. Status verifikasi adalah lapisan tambahan, bukan gerbang.
   - Untuk progres: yang diverifikasi adalah **klaim persentasenya**, bukan tiap foto. `berkas.status_verifikasi` pada foto progres sengaja tidak dipakai.
   - Menolak wajib menyertakan `catatan_verifikasi`.
   - Polanya dibagikan lewat `App\Models\Concerns\DapatDiverifikasi` (casts, kolom mass-assignment, relasi `diverifikasiOleh`, `tandaiVerifikasi()`) dan `App\Http\Requests\VerifikasiRequest` (aturan validasi + `keputusan()`). Konsumen baru cukup `use DapatDiverifikasi` di model dan `extends VerifikasiRequest` dengan satu method `subjek()`. Kolomnya seragam di semua tabel: `status_verifikasi`, `catatan_verifikasi`, `diverifikasi_by`, `diverifikasi_pada`. Efek samping khas tiap model tetap di controller masing-masing.
+
+- **Kerangka layar** — semua halaman Cipta Karya dibungkus `CiptaKaryaShell` (`components/cipta-karya/shell.tsx`): kanvas hangat `ckColors.canvas`, sidebar tanpa latar, dan `<main>` putih membulat yang mengambang di atasnya. Jangan menyusun ulang `<div flex><Sidebar/><main/></div>` per halaman — chrome-nya pernah tersalin tujuh kali. Konsekuensi palet: kartu memakai garis rambut `ckColors.cardBorder`, **bukan** bayangan, karena isinya sudah berada di dalam panel yang berbayang.
+- **Detail paket** (`pages/paket/show.tsx`) berbentuk tiga tab — Ringkasan, Dokumen, Bangunan — dengan kepala lengket berisi judul, kode, aksi, dan lencana jumlah dokumen yang perlu ditindaklanjuti. Tab aktif disimpan di query string `?tab=`, bukan hanya state: kunjungan Inertia setelah unggah/verifikasi bisa memasang ulang komponen halaman, dan tanpa itu tabnya melompat balik ke Ringkasan. Isi tiap tab ada di `paket-ringkasan.tsx`, `paket-dokumen.tsx`, `paket-bangunan.tsx`; panel geser satu dokumen di `dokumen-panel.tsx`; peleburan `status` + `status_verifikasi` jadi satu keadaan tampilan ada di `dokumen-status.tsx` (`keadaanDokumen`) — jangan hitung ulang kombinasinya di tempat lain.
 
 ## Jebakan yang sudah pernah menggigit
 

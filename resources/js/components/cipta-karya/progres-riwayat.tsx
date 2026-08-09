@@ -1,10 +1,10 @@
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { formatDate, formatFileSize } from '@/lib/utils';
 import berkasRoutes from '@/routes/berkas';
 import paketRoutes from '@/routes/paket';
 import progresRoutes from '@/routes/progres';
-import type { ProgresEntry } from '@/types';
+import type { ProgresEntry, ProgresFoto } from '@/types';
 import {
     CkButton,
     CkDialog,
@@ -19,10 +19,10 @@ import {
     CkInput,
     CkTextarea,
 } from './ck-dialog';
-import { CkCard, CkSectionLabel, VerifikasiBadge } from './primitives';
+import { CkCard, VerifikasiBadge } from './primitives';
 import { ckColors } from './tokens';
 
-function TambahProgresDialog({
+export function TambahProgresDialog({
     paketId,
     open,
     onOpenChange,
@@ -55,6 +55,7 @@ function TambahProgresDialog({
             {
                 forceFormData: true,
                 preserveScroll: true,
+                preserveState: true,
                 onSuccess: () => onOpenChange(false),
                 onError: (e) => setErrors(e as Record<string, string>),
                 onFinish: () => setSubmitting(false),
@@ -133,32 +134,83 @@ function TambahProgresDialog({
     );
 }
 
-function ProgresEntryCard({
+/**
+ * Kartu foto pendukung. Fotonya ditampilkan langsung, bukan sekadar ditautkan:
+ * gunanya entri progres adalah "gedung pas X% bentuknya seperti apa", dan itu
+ * hilang kalau tiap foto harus diunduh dulu untuk dilihat.
+ */
+function KartuFoto({ foto }: { foto: ProgresFoto }) {
+    return (
+        <a
+            href={berkasRoutes.download(foto.id).url}
+            style={{
+                borderRadius: 12,
+                overflow: 'hidden',
+                border: `1px solid ${ckColors.border}`,
+                display: 'block',
+            }}
+        >
+            <img
+                src={berkasRoutes.preview(foto.id).url}
+                alt={foto.nama_asli}
+                loading="lazy"
+                style={{
+                    height: 104,
+                    width: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                    background: '#F1EFEA',
+                }}
+            />
+            <div
+                style={{
+                    padding: '7px 9px',
+                    fontSize: 11.5,
+                    color: ckColors.textMuted,
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                }}
+            >
+                {foto.nama_asli} · {formatFileSize(foto.ukuran)}
+            </div>
+        </a>
+    );
+}
+
+function KartuProgres({
     entry,
     canVerify,
 }: {
     entry: ProgresEntry;
     canVerify: boolean;
 }) {
-    const [rejectOpen, setRejectOpen] = useState(false);
+    const [tolakOpen, setTolakOpen] = useState(false);
     const [catatan, setCatatan] = useState('');
     const [verifying, setVerifying] = useState(false);
 
-    function verify(keputusan: 'diverifikasi' | 'ditolak', note?: string) {
+    function verifikasi(
+        keputusan: 'diverifikasi' | 'ditolak',
+        catatanVerifikasi?: string,
+    ) {
         setVerifying(true);
         router.patch(
             progresRoutes.verify(entry.id).url,
-            { keputusan, catatan_verifikasi: note },
+            { keputusan, catatan_verifikasi: catatanVerifikasi },
             {
                 preserveScroll: true,
-                onSuccess: () => setRejectOpen(false),
+                preserveState: true,
+                onSuccess: () => {
+                    setTolakOpen(false);
+                    setCatatan('');
+                },
                 onFinish: () => setVerifying(false),
             },
         );
     }
 
     return (
-        <div style={{ padding: '14px 18px' }}>
+        <CkCard padded style={{ padding: '16px 18px' }}>
             <div
                 style={{
                     display: 'flex',
@@ -169,10 +221,11 @@ function ProgresEntryCard({
             >
                 <div
                     style={{
-                        fontSize: 20,
+                        fontSize: 22,
                         fontWeight: 640,
                         color: ckColors.text,
                         fontVariantNumeric: 'tabular-nums',
+                        letterSpacing: '-.02em',
                     }}
                 >
                     {entry.persentase}%
@@ -191,7 +244,10 @@ function ProgresEntryCard({
                     style={{
                         fontSize: 14,
                         color: ckColors.text,
-                        marginTop: 6,
+                        marginTop: 7,
+                        lineHeight: 1.5,
+                        maxWidth: '70ch',
+                        textWrap: 'pretty',
                     }}
                 >
                     {entry.keterangan}
@@ -201,26 +257,15 @@ function ProgresEntryCard({
             {entry.foto.length > 0 && (
                 <div
                     style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 8,
-                        marginTop: 8,
+                        display: 'grid',
+                        gridTemplateColumns:
+                            'repeat(auto-fill,minmax(150px,1fr))',
+                        gap: 10,
+                        marginTop: 12,
                     }}
                 >
                     {entry.foto.map((f) => (
-                        <a
-                            key={f.id}
-                            href={berkasRoutes.download(f.id).url}
-                            style={{
-                                fontSize: 12.5,
-                                color: ckColors.accent,
-                                background: ckColors.accentSoft,
-                                borderRadius: 8,
-                                padding: '4px 9px',
-                            }}
-                        >
-                            {f.nama_asli} · {formatFileSize(f.ukuran)}
-                        </a>
+                        <KartuFoto key={f.id} foto={f} />
                     ))}
                 </div>
             )}
@@ -229,12 +274,12 @@ function ProgresEntryCard({
                 style={{
                     fontSize: 12,
                     color: ckColors.textMuted,
-                    marginTop: 8,
+                    marginTop: 10,
                 }}
             >
                 Dilaporkan oleh {entry.dilaporkan_oleh}
                 {entry.diverifikasi_oleh &&
-                    ` · diverifikasi oleh ${entry.diverifikasi_oleh}`}
+                    ` · ${entry.status_verifikasi === 'ditolak' ? 'ditolak' : 'diverifikasi'} oleh ${entry.diverifikasi_oleh}`}
             </div>
 
             {entry.status_verifikasi === 'ditolak' &&
@@ -251,19 +296,20 @@ function ProgresEntryCard({
                 )}
 
             {canVerify && entry.status_verifikasi === 'diajukan' && (
-                <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+                <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
                     <button
                         type="button"
                         disabled={verifying}
-                        onClick={() => verify('diverifikasi')}
+                        onClick={() => verifikasi('diverifikasi')}
                         style={{
+                            font: 'inherit',
                             fontSize: 12.5,
                             fontWeight: 590,
                             color: '#fff',
                             background: ckColors.accent,
                             border: 'none',
-                            borderRadius: 8,
-                            padding: '5px 11px',
+                            borderRadius: 9,
+                            padding: '7px 13px',
                             cursor: 'pointer',
                             opacity: verifying ? 0.6 : 1,
                         }}
@@ -273,15 +319,16 @@ function ProgresEntryCard({
                     <button
                         type="button"
                         disabled={verifying}
-                        onClick={() => setRejectOpen(true)}
+                        onClick={() => setTolakOpen(true)}
                         style={{
+                            font: 'inherit',
                             fontSize: 12.5,
                             fontWeight: 590,
                             color: ckColors.danger,
                             background: 'none',
                             border: `1px solid ${ckColors.danger}`,
-                            borderRadius: 8,
-                            padding: '5px 11px',
+                            borderRadius: 9,
+                            padding: '7px 13px',
                             cursor: 'pointer',
                             opacity: verifying ? 0.6 : 1,
                         }}
@@ -291,7 +338,7 @@ function ProgresEntryCard({
                 </div>
             )}
 
-            <CkDialog open={rejectOpen} onOpenChange={setRejectOpen}>
+            <CkDialog open={tolakOpen} onOpenChange={setTolakOpen}>
                 <CkDialogContent>
                     <CkDialogTitle>Tolak entri progres</CkDialogTitle>
                     <CkDialogDescription>
@@ -316,98 +363,50 @@ function ProgresEntryCard({
                         <CkButton
                             variant="danger"
                             disabled={verifying || catatan.trim() === ''}
-                            onClick={() => verify('ditolak', catatan)}
+                            onClick={() => verifikasi('ditolak', catatan)}
                         >
                             Tolak entri
                         </CkButton>
                     </CkDialogFooter>
                 </CkDialogContent>
             </CkDialog>
-        </div>
+        </CkCard>
     );
 }
 
 export function ProgresRiwayat({
-    paketId,
     entries,
+    canVerify,
 }: {
-    paketId: number;
     entries: ProgresEntry[];
+    canVerify: boolean;
 }) {
-    const { auth } = usePage().props;
-    const [addOpen, setAddOpen] = useState(false);
+    if (entries.length === 0) {
+        return (
+            <CkCard>
+                <div
+                    style={{
+                        padding: '24px 18px',
+                        fontSize: 14,
+                        color: ckColors.textMuted,
+                        textAlign: 'center',
+                    }}
+                >
+                    Belum ada riwayat progres fisik yang dicatat.
+                </div>
+            </CkCard>
+        );
+    }
 
     return (
-        <div>
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    margin: '0 6px 8px',
-                }}
-            >
-                <CkSectionLabel style={{ margin: 0 }}>
-                    Riwayat progres fisik
-                </CkSectionLabel>
-                {auth.user.can_input && (
-                    <button
-                        type="button"
-                        onClick={() => setAddOpen(true)}
-                        style={{
-                            fontSize: 12.5,
-                            fontWeight: 560,
-                            color: ckColors.accent,
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
-                        }}
-                    >
-                        + Catat progres
-                    </button>
-                )}
-            </div>
-
-            {entries.length === 0 ? (
-                <CkCard>
-                    <div
-                        style={{
-                            padding: '24px 18px',
-                            fontSize: 14,
-                            color: ckColors.textMuted,
-                            textAlign: 'center',
-                        }}
-                    >
-                        Belum ada riwayat progres fisik yang dicatat.
-                    </div>
-                </CkCard>
-            ) : (
-                <CkCard>
-                    {entries.map((entry, i) => (
-                        <div
-                            key={entry.id}
-                            style={{
-                                borderTop:
-                                    i === 0
-                                        ? undefined
-                                        : `1px solid ${ckColors.border}`,
-                            }}
-                        >
-                            <ProgresEntryCard
-                                entry={entry}
-                                canVerify={auth.user.can_verify}
-                            />
-                        </div>
-                    ))}
-                </CkCard>
-            )}
-
-            <TambahProgresDialog
-                paketId={paketId}
-                open={addOpen}
-                onOpenChange={setAddOpen}
-            />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {entries.map((entry) => (
+                <KartuProgres
+                    key={entry.id}
+                    entry={entry}
+                    canVerify={canVerify}
+                />
+            ))}
         </div>
     );
 }
