@@ -24,6 +24,18 @@
     background: rgba(0, 0, 0, 0.02);
 }
 
+/* Panel dokumen (dokumen-panel.tsx) masuk dari tepi kanan. */
+@keyframes ck-slide-in {
+    from {
+        transform: translateX(24px);
+        opacity: 0;
+    }
+    to {
+        transform: none;
+        opacity: 1;
+    }
+}
+
 /* Kontrol form & tombol di dalam dialog bertema Cipta Karya (ck-dialog.tsx). */
 .ck-kontrol:focus {
     border-color: #0066b3;

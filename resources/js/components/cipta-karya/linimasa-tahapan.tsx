@@ -1,10 +1,9 @@
-import { Fragment } from 'react';
 import type { Paket } from '@/types';
 import { CkCard } from './primitives';
 import { ckColors } from './tokens';
 
 /** Tanggal ringkas untuk di bawah titik linimasa, mis. "04 Mar". */
-function formatShortDate(value: string | null): string {
+export function formatShortDate(value: string | null): string {
     if (!value) {
         return '—';
     }
@@ -15,17 +14,55 @@ function formatShortDate(value: string | null): string {
     }).format(new Date(value));
 }
 
-type StepState = 'done' | 'current' | 'pending';
+export type StepState = 'done' | 'current' | 'pending';
 
-function TimelineStep({
-    label,
-    dateLabel,
-    state,
-}: {
+export type Tahapan = {
+    key: string;
     label: string;
-    dateLabel: string;
+    date: string | null;
     state: StepState;
-}) {
+};
+
+/**
+ * Linimasa tahapan kontrak (Kontrak → SPMK → MC-0 → PHO → FHO). Tahap
+ * "berjalan" adalah tahap pertama yang tanggalnya belum lewat atau belum
+ * diisi; bila semuanya sudah lewat, tidak ada yang berstatus current. FHO
+ * belum punya kolom tanggal sendiri, jadi selalu pending.
+ *
+ * Diekspor karena kartu "Tahap berjalan" di tab Ringkasan membaca tahap yang
+ * sama — dua tampilan atas satu perhitungan, bukan dua perhitungan yang
+ * kebetulan mirip.
+ */
+export function tahapanPaket(paket: Paket): Tahapan[] {
+    const now = new Date();
+    const milestones: Omit<Tahapan, 'state'>[] = [
+        { key: 'kontrak', label: 'Kontrak', date: paket.tanggal_kontrak },
+        { key: 'spmk', label: 'SPMK', date: paket.tanggal_spmk },
+        { key: 'mc0', label: 'MC-0', date: paket.tanggal_mc0 },
+        { key: 'pho', label: 'PHO', date: paket.tanggal_pho_rencana },
+        { key: 'fho', label: 'FHO', date: null },
+    ];
+
+    let currentIndex = milestones.findIndex(
+        (m) => !m.date || new Date(m.date) > now,
+    );
+
+    if (currentIndex === -1) {
+        currentIndex = milestones.length; // semua sudah lewat
+    }
+
+    return milestones.map((m, i) => ({
+        ...m,
+        state:
+            i < currentIndex
+                ? 'done'
+                : i === currentIndex
+                  ? 'current'
+                  : 'pending',
+    }));
+}
+
+function TitikTahap({ tahap }: { tahap: Tahapan }) {
     return (
         <div
             style={{
@@ -44,13 +81,13 @@ function TimelineStep({
                     height: 15,
                     borderRadius: '50%',
                     background:
-                        state === 'pending'
+                        tahap.state === 'pending'
                             ? '#DCDAD4'
-                            : state === 'current'
+                            : tahap.state === 'current'
                               ? '#fff'
                               : ckColors.accent,
                     border:
-                        state === 'current'
+                        tahap.state === 'current'
                             ? `4px solid ${ckColors.accent}`
                             : undefined,
                     boxSizing: 'border-box',
@@ -61,68 +98,27 @@ function TimelineStep({
                     style={{
                         fontSize: 12.5,
                         fontWeight: 590,
-                        color: state === 'pending' ? '#B4B2AC' : ckColors.text,
+                        color: ckColors.text,
                     }}
                 >
-                    {label}
+                    {tahap.label}
                 </div>
                 <div
                     style={{
                         fontSize: 11.5,
-                        color: state === 'pending' ? '#B4B2AC' : '#9C9A94',
+                        color: ckColors.textMuted3,
                         marginTop: 1,
                     }}
                 >
-                    {dateLabel}
+                    {formatShortDate(tahap.date)}
                 </div>
             </div>
         </div>
     );
 }
 
-function TimelineConnector({ state }: { state: StepState }) {
-    return (
-        <div
-            style={{
-                flex: 1,
-                height: 2,
-                marginTop: 6.5,
-                background:
-                    state === 'done'
-                        ? ckColors.accent
-                        : state === 'current'
-                          ? `linear-gradient(90deg, ${ckColors.accent}, #DCDAD4)`
-                          : '#DCDAD4',
-            }}
-        />
-    );
-}
-
-/**
- * Linimasa tahapan kontrak (Kontrak → SPMK → MC-0 → PHO → FHO) di halaman
- * detail paket. Tahap "berjalan" adalah tahap pertama yang tanggalnya belum
- * lewat atau belum diisi; bila semuanya sudah lewat, tidak ada yang berstatus
- * current. FHO belum punya kolom tanggal sendiri, jadi selalu pending.
- */
 export function LinimasaTahapan({ paket }: { paket: Paket }) {
-    const now = new Date();
-    const milestones: { key: string; label: string; date: string | null }[] = [
-        { key: 'kontrak', label: 'Kontrak', date: paket.tanggal_kontrak },
-        { key: 'spmk', label: 'SPMK', date: paket.tanggal_spmk },
-        { key: 'mc0', label: 'MC-0', date: paket.tanggal_mc0 },
-        { key: 'pho', label: 'PHO', date: paket.tanggal_pho_rencana },
-    ];
-    let currentIndex = milestones.findIndex(
-        (m) => !m.date || new Date(m.date) > now,
-    );
-
-    if (currentIndex === -1) {
-        currentIndex = milestones.length; // semua sudah lewat
-    }
-
-    const stepStates: StepState[] = milestones.map((_, i) =>
-        i < currentIndex ? 'done' : i === currentIndex ? 'current' : 'pending',
-    );
+    const tahapan = tahapanPaket(paket);
 
     return (
         <CkCard padded>
@@ -132,19 +128,36 @@ export function LinimasaTahapan({ paket }: { paket: Paket }) {
                     alignItems: 'flex-start',
                     justifyContent: 'space-between',
                     gap: 6,
+                    flexWrap: 'wrap',
                 }}
             >
-                {milestones.map((m, i) => (
-                    <Fragment key={m.key}>
-                        <TimelineStep
-                            label={m.label}
-                            dateLabel={formatShortDate(m.date)}
-                            state={stepStates[i]}
-                        />
-                        <TimelineConnector state={stepStates[i]} />
-                    </Fragment>
+                {tahapan.map((tahap, i) => (
+                    <div
+                        key={tahap.key}
+                        style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6,
+                            flex: 1,
+                            minWidth: 120,
+                        }}
+                    >
+                        <TitikTahap tahap={tahap} />
+
+                        {i < tahapan.length - 1 && (
+                            // Garis ditarik ke atas agar sejajar titik, bukan
+                            // dengan tengah kolom yang ikut tinggi labelnya.
+                            <div
+                                style={{
+                                    flex: 1,
+                                    height: 2,
+                                    marginTop: -24,
+                                    background: '#DCDAD4',
+                                }}
+                            />
+                        )}
+                    </div>
                 ))}
-                <TimelineStep label="FHO" dateLabel="—" state="pending" />
             </div>
         </CkCard>
     );

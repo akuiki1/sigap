@@ -26,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('berkas.verify');
     Route::get('berkas/{berkas}/unduh', [BerkasController::class, 'download'])
         ->name('berkas.download');
+    Route::get('berkas/{berkas}/pratinjau', [BerkasController::class, 'preview'])
+        ->name('berkas.preview');
 
     Route::post('paket/{paket}/progres', [ProgresPaketController::class, 'store'])
         ->name('paket.progres.store');

@@ -69,8 +69,11 @@ class PaketController extends Controller
     {
         $paket->load([
             'dokumenPaket.checklistDokumen',
-            'dokumenPaket.berkasTerkini.uploadedBy',
-            'dokumenPaket.berkasTerkini.diverifikasiOleh',
+            // Seluruh versi, bukan hanya yang terkini: panel dokumen menampilkan
+            // riwayat revisi, dan versi terkini toh ada di dalam koleksi ini.
+            'dokumenPaket.berkas' => fn ($query) => $query->orderByDesc('versi'),
+            'dokumenPaket.berkas.uploadedBy',
+            'dokumenPaket.berkas.diverifikasiOleh',
             'progresPaket' => fn ($query) => $query->latest('tanggal')->latest('id'),
             'progresPaket.foto',
             'progresPaket.dilaporkanOleh',
@@ -84,11 +87,6 @@ class PaketController extends Controller
             fn ($d) => $d->status->value === 'ada',
         )->count();
 
-        $wajibBelum = $paket->dokumenPaket
-            ->filter(fn ($d) => $d->status->value === 'belum' && $d->checklistDokumen->wajib)
-            ->map(fn ($d) => $d->checklistDokumen->nama)
-            ->values();
-
         $rencanaProgres = $paket->rencanaProgres();
         $today = Carbon::now();
 
@@ -98,9 +96,11 @@ class PaketController extends Controller
         return Inertia::render('paket/show', [
             'paket' => $paket,
             'statusLabel' => $paket->status->label(),
-            'kelengkapanPersen' => $totalItem > 0 ? (int) round($adaCount / $totalItem * 100) : 0,
-            'dokumenWajibBelum' => $wajibBelum,
-            'rencanaProgres' => $rencanaProgres,
+            'kelengkapan' => [
+                'persen' => $totalItem > 0 ? (int) round($adaCount / $totalItem * 100) : 0,
+                'ada' => $adaCount,
+                'total' => $totalItem,
+            ],
             'sections' => $this->groupSections($paket->dokumenPaket),
             'riwayatProgres' => $paket->progresPaket->map(fn (ProgresPaket $p) => $this->progresRingkas($p))->values(),
             'titikKoordinat' => $paket->titikKoordinat->map(fn (TitikKoordinatPaket $t) => [
@@ -111,8 +111,15 @@ class PaketController extends Controller
                 'keterangan' => $t->keterangan,
                 'dicatat_oleh' => $t->dicatatOleh->name,
             ])->values(),
+            // Tanggalnya dikirim mentah, bukan sebagai kalimat jadi: penyusunan
+            // "04 Mar – 12 Sep 2026 · 180 hari" memakai Intl 'id-ID' di sisi
+            // React, sama seperti tanggal lain di aplikasi ini.
             'masaPelaksanaan' => $mulaiPelaksanaan && $selesaiPelaksanaan
-                ? $mulaiPelaksanaan->diffInDays($selesaiPelaksanaan).' hari kalender'
+                ? [
+                    'mulai' => $mulaiPelaksanaan->toDateString(),
+                    'selesai' => $selesaiPelaksanaan->toDateString(),
+                    'hari' => (int) $mulaiPelaksanaan->diffInDays($selesaiPelaksanaan),
+                ]
                 : null,
             'progresAgregat' => [
                 'points' => $this->progresPoints($paket->progres, $rencanaProgres, $today),
@@ -148,9 +155,22 @@ class PaketController extends Controller
                     'docs' => $docs->map(fn ($d) => [
                         'id' => $d->checklist_dokumen_id,
                         'nama' => $d->checklistDokumen->nama,
+                        // Tahapnya ikut per item, bukan hanya di kepala seksi:
+                        // panel unggah & daftar "butuh tindakan" menampilkannya
+                        // di luar konteks pengelompokan.
+                        'tahap' => $tahap,
                         'status' => $d->status->value,
                         'wajib' => $d->checklistDokumen->wajib,
-                        'berkas' => $this->berkasRingkas($d->berkasTerkini),
+                        'berkas' => $this->berkasRingkas($d->berkas->firstWhere('is_terkini', true)),
+                        'riwayat' => $d->berkas->map(fn (Berkas $b) => [
+                            'id' => $b->id,
+                            'versi' => $b->versi,
+                            'nama_asli' => $b->nama_asli,
+                            'ukuran' => $b->ukuran,
+                            'is_terkini' => $b->is_terkini,
+                            'diunggah_oleh' => $b->uploadedBy->name,
+                            'diunggah_pada' => $b->created_at?->toIso8601String(),
+                        ])->values()->all(),
                     ])->values()->all(),
                 ];
             })
@@ -175,12 +195,16 @@ class PaketController extends Controller
             'nama_asli' => $berkas->nama_asli,
             'ukuran' => $berkas->ukuran,
             'versi' => $berkas->versi,
+            // Dipakai panel dokumen untuk memilih cara pratinjau (gambar, PDF,
+            // atau hanya kartu format) tanpa menebak-nebak dari ekstensi nama.
+            'mime_type' => $berkas->mime_type,
             'status_verifikasi' => $berkas->status_verifikasi->value,
             'status_verifikasi_label' => $berkas->status_verifikasi->label(),
             'catatan_verifikasi' => $berkas->catatan_verifikasi,
             'diunggah_oleh' => $berkas->uploadedBy->name,
             'diunggah_pada' => $berkas->created_at?->toIso8601String(),
             'diverifikasi_oleh' => $berkas->diverifikasiOleh?->name,
+            'diverifikasi_pada' => $berkas->diverifikasi_pada?->toIso8601String(),
         ];
     }
 

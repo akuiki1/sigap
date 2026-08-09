@@ -12,6 +12,12 @@
  */
 export const ckColors = {
     bg: '#FFFFFF',
+    /**
+     * Kanvas aplikasi di belakang panel utama. Sidebar duduk langsung di atas
+     * warna ini tanpa latar sendiri, sehingga panel putih di sebelahnya terbaca
+     * sebagai satu lembar yang mengambang — bukan dua kolom bersebelahan.
+     */
+    canvas: '#F4F3F0',
     text: '#1D1C1A',
     textMuted: '#8C8A85',
     textMuted2: '#86847E',
@@ -31,7 +37,16 @@ export const ckColors = {
     dangerSoft: 'rgba(214,58,46,.1)',
     warn: '#B9740A',
     warnSoft: 'rgba(185,116,10,.12)',
-    cardShadow: '0 1px 1.5px rgba(30,25,15,.04), 0 5px 18px rgba(30,25,15,.03)',
+    /**
+     * Kartu dibatasi garis rambut, bukan bayangan: seluruh isi halaman kini
+     * berada di atas panel putih yang sudah mengambang di atas kanvas, dan
+     * menumpuk bayangan di dalam bayangan membuat batas kartunya kabur.
+     */
+    cardBorder: 'rgba(0,0,0,.08)',
+    /** Bayangan panel utama yang mengambang di atas kanvas. */
+    panelShadow: '0 1px 2px rgba(30,25,15,.05), 0 10px 30px rgba(30,25,15,.05)',
+    /** Bayangan tipis item navigasi aktif — "kartu putih" kecil di atas kanvas. */
+    navActiveShadow: '0 1px 2px rgba(30,25,15,.07)',
 } as const;
 
 /**

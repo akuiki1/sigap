@@ -1,7 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
-import { ChecklistItemRow } from '@/components/cipta-karya/checklist-item';
 import '@/components/cipta-karya/cipta-karya.css';
 import {
     CkButton,
@@ -13,33 +12,59 @@ import {
     CkDialogTitle,
     CkDialogTrigger,
 } from '@/components/cipta-karya/ck-dialog';
-import { InformasiPaket } from '@/components/cipta-karya/informasi-paket';
-import { LinimasaTahapan } from '@/components/cipta-karya/linimasa-tahapan';
-import { PetaKoordinat } from '@/components/cipta-karya/peta-koordinat';
-import { CkCard, CkSectionLabel } from '@/components/cipta-karya/primitives';
-import { ProgresRiwayat } from '@/components/cipta-karya/progres-riwayat';
-import { SCurveChart } from '@/components/cipta-karya/s-curve-chart';
-import { CiptaKaryaSidebar } from '@/components/cipta-karya/sidebar';
-import { ckColors, ckFont } from '@/components/cipta-karya/tokens';
-import { dashboard } from '@/routes';
-import paket, { edit, index } from '@/routes/paket';
+import { DokumenPanel } from '@/components/cipta-karya/dokumen-panel';
+import { perluTindakan } from '@/components/cipta-karya/dokumen-status';
+import { PaketBangunan } from '@/components/cipta-karya/paket-bangunan';
+import { PaketDokumen } from '@/components/cipta-karya/paket-dokumen';
+import { PaketRingkasan } from '@/components/cipta-karya/paket-ringkasan';
+import { CiptaKaryaShell } from '@/components/cipta-karya/shell';
+import { ckColors } from '@/components/cipta-karya/tokens';
+import { UnggahBerkasDialog } from '@/components/cipta-karya/unggah-berkas';
+import { edit, index } from '@/routes/paket';
 import type {
     ChecklistSection,
+    DokumenChecklistItem,
+    Kelengkapan,
+    MasaPelaksanaan,
     Paket,
     ProgresAgregat,
     ProgresEntry,
     TitikKoordinat,
 } from '@/types';
 
+type Tab = 'ringkasan' | 'dokumen' | 'bangunan';
+
+const TABS: Tab[] = ['ringkasan', 'dokumen', 'bangunan'];
+
+const LABEL_TAB: Record<Tab, string> = {
+    ringkasan: 'Ringkasan',
+    dokumen: 'Dokumen',
+    bangunan: 'Bangunan',
+};
+
+/**
+ * Tab yang sedang terbuka disimpan di query string, bukan hanya di state.
+ * Alasannya dua: kunjungan Inertia setelah unggah/verifikasi bisa memasang
+ * ulang komponen halaman (state hilang, tab melompat balik ke Ringkasan), dan
+ * tautan ke tab tertentu jadi bisa dibagikan apa adanya.
+ */
+function tabDariUrl(): Tab {
+    if (typeof window === 'undefined') {
+        return 'ringkasan';
+    }
+
+    const nilai = new URLSearchParams(window.location.search).get('tab');
+
+    return TABS.includes(nilai as Tab) ? (nilai as Tab) : 'ringkasan';
+}
+
 type PaketShowProps = {
     paket: Paket;
     statusLabel: string;
-    kelengkapanPersen: number;
-    dokumenWajibBelum: string[];
-    rencanaProgres: number | null;
+    kelengkapan: Kelengkapan;
     sections: ChecklistSection[];
     riwayatProgres: ProgresEntry[];
-    masaPelaksanaan: string | null;
+    masaPelaksanaan: MasaPelaksanaan | null;
     progresAgregat: ProgresAgregat;
     titikKoordinat: TitikKoordinat[];
 };
@@ -47,8 +72,7 @@ type PaketShowProps = {
 export default function PaketShow({
     paket: data,
     statusLabel,
-    kelengkapanPersen,
-    dokumenWajibBelum,
+    kelengkapan,
     sections,
     riwayatProgres,
     masaPelaksanaan,
@@ -56,81 +80,97 @@ export default function PaketShow({
     titikKoordinat,
 }: PaketShowProps) {
     const { auth } = usePage().props;
-    const [pendingDoc, setPendingDoc] = useState<number | null>(null);
+    const [tab, setTab] = useState<Tab>(tabDariUrl);
 
-    /**
-     * Kembalikan satu item checklist ke "belum". Tidak ada arah sebaliknya di
-     * sini: status "ada" hanya lahir dari unggahan berkas.
-     */
-    function batalkanTanda(checklistDokumenId: number) {
-        if (!auth.user.can_input) {
-            return;
-        }
+    // Panel dokumen & modal unggah memegang id, bukan objek item: props halaman
+    // datang baru setiap kunjungan Inertia, dan menyimpan objek lama akan
+    // menampilkan status pra-unggah setelah berkasnya berganti.
+    const [panelId, setPanelId] = useState<number | null>(null);
+    const [unggahId, setUnggahId] = useState<number | null>(null);
+    const [unggahOpen, setUnggahOpen] = useState(false);
 
-        setPendingDoc(checklistDokumenId);
-        router.patch(
-            paket.dokumen.update({
-                paket: data.id,
-                checklistDokumen: checklistDokumenId,
-            }).url,
-            {},
-            {
-                preserveScroll: true,
-                onFinish: () => setPendingDoc(null),
-            },
-        );
-    }
+    const semuaDokumen = sections.flatMap((s) => s.docs);
+    const panelItem = semuaDokumen.find((d) => d.id === panelId) ?? null;
+    const unggahItem = semuaDokumen.find((d) => d.id === unggahId) ?? null;
+    const jumlahTindakan = semuaDokumen.filter(perluTindakan).length;
+
+    const pindahTab = useCallback((tujuan: Tab) => {
+        setTab(tujuan);
+
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', tujuan);
+        window.history.replaceState(window.history.state, '', url);
+    }, []);
+
+    const bukaPanel = useCallback(
+        (item: DokumenChecklistItem) => {
+            pindahTab('dokumen');
+            setPanelId(item.id);
+        },
+        [pindahTab],
+    );
+
+    const bukaUnggah = useCallback(
+        (item: DokumenChecklistItem | null) => {
+            pindahTab('dokumen');
+            setPanelId(null);
+            setUnggahId(item?.id ?? null);
+            setUnggahOpen(true);
+        },
+        [pindahTab],
+    );
 
     return (
         <>
             <Head title={data.nama} />
 
-            <div
-                style={{
-                    display: 'flex',
-                    height: '100vh',
-                    width: '100%',
-                    background: ckColors.bg,
-                    color: ckColors.text,
-                    overflow: 'hidden',
-                    fontFamily: ckFont,
-                    WebkitFontSmoothing: 'antialiased',
-                }}
+            <CiptaKaryaShell
+                active="paket"
+                mainStyle={{ position: 'relative' }}
             >
-                <CiptaKaryaSidebar active="paket" />
-
-                <main style={{ flex: 1, minWidth: 0, overflowY: 'auto' }}>
+                <div
+                    style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 20,
+                        background: 'rgba(255,255,255,.92)',
+                        backdropFilter: 'blur(20px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                        borderBottom: `1px solid ${ckColors.border}`,
+                        borderRadius: '18px 18px 0 0',
+                    }}
+                >
                     <div
                         style={{
                             maxWidth: 1180,
                             margin: '0 auto',
-                            padding: '40px 48px 72px',
+                            padding: '12px 32px 0',
                         }}
                     >
                         <div
                             style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: 16,
+                                gap: 14,
+                                flexWrap: 'wrap',
                             }}
                         >
                             <Link
-                                href={dashboard()}
+                                href={index()}
                                 className="ck-link-accent"
                                 style={{
                                     display: 'inline-flex',
                                     alignItems: 'center',
                                     gap: 4,
                                     color: ckColors.accent,
-                                    fontSize: 15,
-                                    fontWeight: 510,
-                                    letterSpacing: '-.01em',
+                                    fontSize: 13.5,
+                                    fontWeight: 520,
+                                    flex: 'none',
                                 }}
                             >
                                 <svg
-                                    width="9"
-                                    height="15"
+                                    width="8"
+                                    height="13"
                                     viewBox="0 0 9 15"
                                     fill="none"
                                     stroke="currentColor"
@@ -140,15 +180,53 @@ export default function PaketShow({
                                 >
                                     <path d="M8 1L1.5 7.5 8 14" />
                                 </svg>
-                                Ringkasan
+                                Data Paket
                             </Link>
+
+                            <div
+                                style={{
+                                    minWidth: 0,
+                                    flex: 1,
+                                    display: 'flex',
+                                    alignItems: 'baseline',
+                                    gap: 10,
+                                    flexWrap: 'wrap',
+                                }}
+                            >
+                                <h1
+                                    style={{
+                                        fontSize: 16,
+                                        fontWeight: 640,
+                                        letterSpacing: '-.02em',
+                                        color: ckColors.text,
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        maxWidth: '100%',
+                                        margin: 0,
+                                    }}
+                                >
+                                    {data.nama}
+                                </h1>
+                                <div
+                                    style={{
+                                        fontSize: 13,
+                                        color: ckColors.textMuted,
+                                        fontVariantNumeric: 'tabular-nums',
+                                        flex: 'none',
+                                    }}
+                                >
+                                    {data.kode_paket}
+                                </div>
+                            </div>
 
                             {(auth.user.can_input || auth.user.is_admin) && (
                                 <div
                                     style={{
                                         display: 'flex',
                                         gap: 14,
-                                        fontSize: 13.5,
+                                        fontSize: 13,
+                                        flex: 'none',
                                     }}
                                 >
                                     {auth.user.can_input && (
@@ -220,236 +298,132 @@ export default function PaketShow({
                             )}
                         </div>
 
-                        <header style={{ marginTop: 14 }}>
-                            <div
-                                style={{
-                                    fontSize: 13,
-                                    fontWeight: 520,
-                                    color: ckColors.textMuted,
-                                    letterSpacing: '.01em',
-                                }}
-                            >
-                                {statusLabel} · TA {data.tahun_anggaran}
-                            </div>
-                            <h1
-                                style={{
-                                    fontSize: 'clamp(24px,2.4vw,30px)',
-                                    fontWeight: 660,
-                                    letterSpacing: '-.025em',
-                                    color: ckColors.text,
-                                    marginTop: 3,
-                                    maxWidth: '22ch',
-                                    lineHeight: 1.15,
-                                }}
-                            >
-                                {data.nama}
-                            </h1>
-                            <div
-                                style={{
-                                    fontSize: 14,
-                                    color: ckColors.textMuted,
-                                    marginTop: 6,
-                                }}
-                            >
-                                {data.kode_paket} · {data.lokasi ?? '—'}
-                            </div>
-                        </header>
-
-                        <section style={{ marginTop: 26, maxWidth: '34ch' }}>
-                            <div
-                                style={{
-                                    fontSize: 13,
-                                    color: ckColors.textMuted,
-                                    fontWeight: 510,
-                                }}
-                            >
-                                Kelengkapan dokumen
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: 'clamp(36px,3.6vw,46px)',
-                                    fontWeight: 600,
-                                    letterSpacing: '-.025em',
-                                    color: ckColors.text,
-                                    marginTop: 2,
-                                    fontVariantNumeric: 'tabular-nums',
-                                }}
-                            >
-                                {kelengkapanPersen}%
-                            </div>
-                            <div
-                                style={{
-                                    fontSize: 16,
-                                    color: ckColors.textMuted,
-                                    marginTop: 8,
-                                    letterSpacing: '-.01em',
-                                }}
-                            >
-                                {dokumenWajibBelum.length > 0 ? (
-                                    <>
-                                        {dokumenWajibBelum.length} dokumen wajib
-                                        belum diunggah —{' '}
-                                        <span
-                                            style={{
-                                                color: ckColors.danger,
-                                                fontWeight: 540,
-                                            }}
-                                        >
-                                            {dokumenWajibBelum.join(', ')}
-                                        </span>
-                                        .
-                                    </>
-                                ) : (
-                                    'Semua dokumen wajib sudah lengkap.'
-                                )}
-                            </div>
-                        </section>
-
-                        <section style={{ marginTop: 26 }}>
-                            <LinimasaTahapan paket={data} />
-                        </section>
-
-                        <section
+                        <div
                             style={{
-                                display: 'grid',
-                                gridTemplateColumns:
-                                    'minmax(0,1fr) minmax(0,1.3fr)',
-                                gap: 26,
-                                marginTop: 30,
-                                alignItems: 'start',
+                                display: 'flex',
+                                gap: 4,
+                                marginTop: 10,
+                                flexWrap: 'wrap',
                             }}
                         >
-                            <div>
-                                <InformasiPaket
-                                    paket={data}
-                                    masaPelaksanaan={masaPelaksanaan}
-                                />
+                            {TABS.map((key) => {
+                                const aktif = tab === key;
+                                const lencana =
+                                    key === 'dokumen' && jumlahTindakan > 0;
 
-                                <CkSectionLabel
-                                    style={{ margin: '26px 0 8px 6px' }}
-                                >
-                                    Kurva-S paket
-                                </CkSectionLabel>
-                                <CkCard padded>
-                                    <SCurveChart
-                                        points={progresAgregat.points}
-                                    />
-                                    <div
+                                return (
+                                    <button
+                                        key={key}
+                                        type="button"
+                                        onClick={() => pindahTab(key)}
+                                        className={
+                                            aktif ? undefined : 'ck-link-accent'
+                                        }
                                         style={{
-                                            fontSize: 13,
-                                            color: ckColors.textMuted,
-                                            marginTop: 10,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 7,
+                                            padding: '9px 14px 11px',
+                                            background: 'none',
+                                            border: 'none',
+                                            borderBottom: `2px solid ${aktif ? ckColors.accent : 'transparent'}`,
+                                            font: 'inherit',
+                                            fontSize: 14,
+                                            fontWeight: aktif ? 600 : 520,
+                                            letterSpacing: '-.01em',
+                                            color: aktif
+                                                ? ckColors.accent
+                                                : '#5F5D57',
+                                            cursor: 'pointer',
+                                            whiteSpace: 'nowrap',
+                                            marginBottom: -1,
                                         }}
                                     >
-                                        Realisasi {progresAgregat.realisasi}%
-                                        {progresAgregat.rencana !== null && (
-                                            <>
-                                                {' '}
-                                                terhadap rencana{' '}
-                                                {progresAgregat.rencana}%
-                                            </>
-                                        )}
-                                    </div>
-                                </CkCard>
-                            </div>
-
-                            <div>
-                                <CkSectionLabel
-                                    style={{ margin: '0 0 2px 6px' }}
-                                >
-                                    Checklist dokumen per tahap
-                                </CkSectionLabel>
-                                {sections.map((sec) => (
-                                    <div
-                                        key={sec.tahap}
-                                        style={{ marginTop: 20 }}
-                                    >
-                                        <div
-                                            style={{
-                                                display: 'flex',
-                                                alignItems: 'baseline',
-                                                justifyContent: 'space-between',
-                                                margin: '0 6px 8px',
-                                            }}
-                                        >
-                                            <div
+                                        {LABEL_TAB[key]}
+                                        {lencana && (
+                                            <span
                                                 style={{
-                                                    fontSize: 14,
-                                                    fontWeight: 610,
-                                                    letterSpacing: '-.01em',
-                                                    color: ckColors.text,
-                                                }}
-                                            >
-                                                {sec.tahap}
-                                            </div>
-                                            <div
-                                                style={{
-                                                    fontSize: 13,
-                                                    color: ckColors.textMuted4,
+                                                    fontSize: 11.5,
+                                                    fontWeight: 600,
+                                                    padding: '1.5px 7px',
+                                                    borderRadius: 999,
+                                                    color: ckColors.danger,
+                                                    background:
+                                                        ckColors.dangerSoft,
                                                     fontVariantNumeric:
                                                         'tabular-nums',
                                                 }}
                                             >
-                                                {sec.done}/{sec.total}
-                                            </div>
-                                        </div>
-                                        <CkCard>
-                                            {sec.docs.map((item, i) => (
-                                                <ChecklistItemRow
-                                                    key={item.id}
-                                                    paketId={data.id}
-                                                    item={item}
-                                                    first={i === 0}
-                                                    canInput={
-                                                        auth.user.can_input
-                                                    }
-                                                    canVerify={
-                                                        auth.user.can_verify
-                                                    }
-                                                    pending={
-                                                        pendingDoc === item.id
-                                                    }
-                                                    onBatalkanTanda={
-                                                        batalkanTanda
-                                                    }
-                                                />
-                                            ))}
-                                        </CkCard>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-
-                        <section style={{ marginTop: 32 }}>
-                            <PetaKoordinat
-                                paketId={data.id}
-                                alamat={data.alamat}
-                                titik={titikKoordinat}
-                            />
-                        </section>
-
-                        <section style={{ marginTop: 32 }}>
-                            <ProgresRiwayat
-                                paketId={data.id}
-                                entries={riwayatProgres}
-                            />
-                        </section>
-
-                        <div style={{ marginTop: 30 }}>
-                            <Link
-                                href={index()}
-                                className="ck-link-accent"
-                                style={{
-                                    fontSize: 14,
-                                    color: ckColors.textMuted,
-                                }}
-                            >
-                                ← Kembali ke Data Paket
-                            </Link>
+                                                {jumlahTindakan}
+                                            </span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </div>
-                </main>
-            </div>
+                </div>
+
+                <div
+                    style={{
+                        maxWidth: 1180,
+                        margin: '0 auto',
+                        padding: '26px 32px 80px',
+                    }}
+                >
+                    {tab === 'ringkasan' && (
+                        <PaketRingkasan
+                            paket={data}
+                            statusLabel={statusLabel}
+                            kelengkapan={kelengkapan}
+                            sections={sections}
+                            riwayatProgres={riwayatProgres}
+                            progresAgregat={progresAgregat}
+                            masaPelaksanaan={masaPelaksanaan}
+                            bukaDokumen={() => pindahTab('dokumen')}
+                            bukaBangunan={() => pindahTab('bangunan')}
+                            bukaItem={bukaPanel}
+                        />
+                    )}
+
+                    {tab === 'dokumen' && (
+                        <PaketDokumen
+                            sections={sections}
+                            canInput={auth.user.can_input}
+                            onLihat={bukaPanel}
+                            onUnggah={bukaUnggah}
+                            onUnggahBaru={() => bukaUnggah(null)}
+                        />
+                    )}
+
+                    {tab === 'bangunan' && (
+                        <PaketBangunan
+                            paket={data}
+                            progresAgregat={progresAgregat}
+                            riwayatProgres={riwayatProgres}
+                            titikKoordinat={titikKoordinat}
+                            canInput={auth.user.can_input}
+                            canVerify={auth.user.can_verify}
+                        />
+                    )}
+                </div>
+
+                <DokumenPanel
+                    item={panelItem}
+                    canInput={auth.user.can_input}
+                    canVerify={auth.user.can_verify}
+                    onTutup={() => setPanelId(null)}
+                    onGantiBerkas={bukaUnggah}
+                />
+
+                <UnggahBerkasDialog
+                    paketId={data.id}
+                    item={unggahItem}
+                    pilihan={semuaDokumen}
+                    open={unggahOpen}
+                    onOpenChange={setUnggahOpen}
+                />
+            </CiptaKaryaShell>
         </>
     );
 }

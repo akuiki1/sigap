@@ -17,7 +17,7 @@ import {
     CkInput,
     CkTextarea,
 } from './ck-dialog';
-import { CkCard, CkSectionLabel } from './primitives';
+import { CkCard } from './primitives';
 import { ckColors } from './tokens';
 
 /**
@@ -666,46 +666,27 @@ export function PetaKoordinat({
 
     return (
         <div>
-            <div
-                style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    margin: '0 6px 8px',
-                }}
-            >
-                <CkSectionLabel style={{ margin: 0 }}>
-                    Lokasi & titik koordinat
-                </CkSectionLabel>
-                {canInput && !formOpen && (
-                    <button
-                        type="button"
-                        onClick={() => setFormOpen(true)}
-                        className="ck-link-accent"
+            <CkCard>
+                <div style={{ padding: '14px 18px 12px' }}>
+                    <div
                         style={{
-                            fontSize: 12.5,
-                            fontWeight: 560,
-                            color: ckColors.accent,
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: 0,
+                            fontSize: 13,
+                            color: ckColors.textMuted,
+                            fontWeight: 510,
                         }}
                     >
-                        + Tandai titik
-                    </button>
-                )}
-            </div>
-
-            <CkCard>
-                <div
-                    style={{
-                        padding: '13px 18px',
-                        fontSize: 14,
-                        color: alamat ? ckColors.text : ckColors.textMuted,
-                    }}
-                >
-                    {alamat ?? 'Alamat gedung belum diisi.'}
+                        Alamat gedung
+                    </div>
+                    <div
+                        style={{
+                            fontSize: 14,
+                            color: alamat ? ckColors.text : ckColors.textMuted,
+                            marginTop: 3,
+                            lineHeight: 1.45,
+                        }}
+                    >
+                        {alamat ?? 'Alamat gedung belum diisi.'}
+                    </div>
                 </div>
 
                 {canInput && (
@@ -721,22 +702,8 @@ export function PetaKoordinat({
 
                 <div
                     ref={containerRef}
-                    style={{ height: 360, width: '100%', zIndex: 0 }}
+                    style={{ height: 280, width: '100%', zIndex: 0 }}
                 />
-
-                {canInput && !formOpen && (
-                    <div
-                        style={{
-                            padding: '10px 18px',
-                            fontSize: 12.5,
-                            color: ckColors.textMuted,
-                            borderTop: `1px solid ${ckColors.border}`,
-                        }}
-                    >
-                        Klik di peta untuk memilih titik, atau cari lokasinya
-                        dulu di kotak pencarian.
-                    </div>
-                )}
 
                 {canInput && formOpen && (
                     <div
@@ -848,27 +815,61 @@ export function PetaKoordinat({
                     </div>
                 )}
 
-                {titik.length === 0 ? (
+                {titik.map((t) => (
+                    <TitikRow
+                        key={t.id}
+                        titik={t}
+                        canInput={canInput}
+                        onSorot={sorot}
+                    />
+                ))}
+
+                {!formOpen && (
                     <div
                         style={{
-                            padding: '20px 18px',
-                            fontSize: 14,
-                            color: ckColors.textMuted,
-                            textAlign: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 12,
+                            padding: '13px 18px',
                             borderTop: `1px solid ${ckColors.border}`,
                         }}
                     >
-                        Belum ada titik koordinat yang ditandai.
+                        <div
+                            style={{
+                                flex: 1,
+                                minWidth: 0,
+                                fontSize: 12.5,
+                                color: ckColors.textMuted,
+                            }}
+                        >
+                            {titik.length === 0
+                                ? canInput
+                                    ? 'Belum ada titik — klik di peta untuk memilih posisinya.'
+                                    : 'Belum ada titik koordinat yang ditandai.'
+                                : `${titik.length} titik tercatat`}
+                        </div>
+
+                        {canInput && (
+                            <button
+                                type="button"
+                                onClick={() => setFormOpen(true)}
+                                className="ck-link-accent"
+                                style={{
+                                    font: 'inherit',
+                                    fontSize: 12.5,
+                                    fontWeight: 560,
+                                    color: ckColors.accent,
+                                    background: 'none',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                    flex: 'none',
+                                }}
+                            >
+                                + Tandai titik
+                            </button>
+                        )}
                     </div>
-                ) : (
-                    titik.map((t) => (
-                        <TitikRow
-                            key={t.id}
-                            titik={t}
-                            canInput={canInput}
-                            onSorot={sorot}
-                        />
-                    ))
                 )}
             </CkCard>
         </div>

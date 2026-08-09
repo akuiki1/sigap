@@ -3,7 +3,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import type { StatusVerifikasi } from '@/types';
 import { ckColors } from './tokens';
 
-/** Kartu putih membulat dengan bayangan tipis — unit visual dasar halaman ini. */
+/** Kartu putih membulat bergaris rambut — unit visual dasar halaman ini. */
 export function CkCard({
     children,
     style,
@@ -17,9 +17,9 @@ export function CkCard({
         <div
             style={{
                 background: '#fff',
-                borderRadius: 16,
+                borderRadius: 14,
                 overflow: padded ? undefined : 'hidden',
-                boxShadow: ckColors.cardShadow,
+                border: `1px solid ${ckColors.cardBorder}`,
                 padding: padded ? '18px 20px 16px' : undefined,
                 ...style,
             }}

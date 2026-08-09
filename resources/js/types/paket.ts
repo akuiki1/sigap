@@ -46,21 +46,37 @@ export type BerkasRingkas = {
     nama_asli: string;
     ukuran: number;
     versi: number;
+    mime_type: string;
     status_verifikasi: StatusVerifikasi;
     status_verifikasi_label: string;
     catatan_verifikasi: string | null;
     diunggah_oleh: string;
     diunggah_pada: string | null;
     diverifikasi_oleh: string | null;
+    diverifikasi_pada: string | null;
+};
+
+/** Satu versi berkas dalam riwayat revisi sebuah item checklist. */
+export type BerkasVersi = {
+    id: number;
+    versi: number;
+    nama_asli: string;
+    ukuran: number;
+    is_terkini: boolean;
+    diunggah_oleh: string;
+    diunggah_pada: string | null;
 };
 
 /** Satu baris checklist dokumen dalam konteks realisasi sebuah paket. */
 export type DokumenChecklistItem = {
     id: number;
     nama: string;
+    tahap: string;
     status: StatusDokumen;
     wajib: boolean;
     berkas: BerkasRingkas | null;
+    /** Semua versi, terbaru dulu — termasuk versi yang sedang berlaku. */
+    riwayat: BerkasVersi[];
 };
 
 /**
@@ -107,6 +123,20 @@ export type ChecklistSection = {
     done: number;
     total: number;
     docs: DokumenChecklistItem[];
+};
+
+/** Kelengkapan checklist dokumen sebuah paket, siap dibaca kartu ringkasan. */
+export type Kelengkapan = {
+    persen: number;
+    ada: number;
+    total: number;
+};
+
+/** Rentang masa pelaksanaan; tanggalnya mentah agar diformat di sisi React. */
+export type MasaPelaksanaan = {
+    mulai: string;
+    selesai: string;
+    hari: number;
 };
 
 /** Satu foto pendukung dalam sebuah entri riwayat progres. */

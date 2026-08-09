@@ -1,7 +1,23 @@
 import { formatCurrency } from '@/lib/utils';
-import type { Paket } from '@/types';
+import type { MasaPelaksanaan, Paket } from '@/types';
 import { CkCard, CkSectionLabel } from './primitives';
 import { ckColors } from './tokens';
+
+/** Mis. "04 Mar – 12 Sep 2026 · 180 hari". */
+function formatMasa(masa: MasaPelaksanaan): string {
+    const mulai = new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+    }).format(new Date(masa.mulai));
+
+    const selesai = new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    }).format(new Date(masa.selesai));
+
+    return `${mulai} – ${selesai} · ${masa.hari} hari`;
+}
 
 function Baris({
     label,
@@ -57,7 +73,7 @@ export function InformasiPaket({
     masaPelaksanaan,
 }: {
     paket: Paket;
-    masaPelaksanaan: string | null;
+    masaPelaksanaan: MasaPelaksanaan | null;
 }) {
     const baris: [string, string][] = [
         ['Sumber dana', paket.sumber_dana ?? '—'],
@@ -68,7 +84,10 @@ export function InformasiPaket({
         ['PPK', paket.ppk ?? '—'],
         ['PPTK', paket.pptk ?? '—'],
         ['No. kontrak', paket.no_kontrak ?? '—'],
-        ['Masa pelaksanaan', masaPelaksanaan ?? '—'],
+        [
+            'Masa pelaksanaan',
+            masaPelaksanaan ? formatMasa(masaPelaksanaan) : '—',
+        ],
     ];
 
     return (
