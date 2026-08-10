@@ -7,9 +7,9 @@ use App\Models\ProgresPaket;
 use App\Models\User;
 
 /**
- * Aturan "siapa boleh apa" atas entri riwayat progres fisik. Melihat dibuka
- * untuk semua peran (bagian dari halaman detail paket); mencatat entri baru
- * & memverifikasi klaim persentase dibatasi peran, sama seperti PaketPolicy.
+ * Aturan "siapa boleh apa" atas entri riwayat progres fisik. Sama seperti
+ * App\Policies\PaketPolicy: admin & operator sama-sama berhak penuh, jadi
+ * gerbangnya tinggal autentikasi.
  */
 class ProgresPaketPolicy
 {
@@ -19,11 +19,11 @@ class ProgresPaketPolicy
      */
     public function create(User $user, Paket $paket): bool
     {
-        return $user->bisaInput();
+        return true;
     }
 
     public function verify(User $user, ProgresPaket $progresPaket): bool
     {
-        return $user->bisaVerifikasi();
+        return true;
     }
 }

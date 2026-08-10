@@ -7,10 +7,13 @@ use App\Models\Paket;
 use App\Models\User;
 
 /**
- * Aturan "siapa boleh apa" atas berkas yang diunggah. Melihat/mengunduh
- * dibuka untuk semua peran (sama seperti PaketPolicy::view) karena berkas
- * adalah bagian dari data paket yang bisa dilihat siapa saja; hanya
- * mengunggah & memverifikasi yang dibatasi peran.
+ * Aturan "siapa boleh apa" atas berkas yang diunggah. Sama seperti
+ * App\Policies\PaketPolicy: admin & operator sama-sama berhak penuh, jadi
+ * gerbangnya tinggal autentikasi.
+ *
+ * Verifikasi tetap punya method sendiri karena controller memanggilnya
+ * terpisah — dan di situlah pembatasan berlabuh seandainya pemisahan
+ * "yang mengunggah bukan yang memverifikasi" kelak dibutuhkan lagi.
  */
 class BerkasPolicy
 {
@@ -21,7 +24,7 @@ class BerkasPolicy
      */
     public function create(User $user, Paket $paket): bool
     {
-        return $user->bisaInput();
+        return true;
     }
 
     public function download(User $user, Berkas $berkas): bool
@@ -31,6 +34,6 @@ class BerkasPolicy
 
     public function verify(User $user, Berkas $berkas): bool
     {
-        return $user->bisaVerifikasi();
+        return true;
     }
 }

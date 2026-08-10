@@ -1,4 +1,4 @@
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useRef, useState } from 'react';
@@ -330,11 +330,9 @@ function KotakCari({ onPilih }: { onPilih: (hasil: HasilCari) => void }) {
 
 function TitikRow({
     titik,
-    canInput,
     onSorot,
 }: {
     titik: TitikKoordinat;
-    canInput: boolean;
     onSorot: (titik: TitikKoordinat) => void;
 }) {
     const [hapusOpen, setHapusOpen] = useState(false);
@@ -405,25 +403,23 @@ function TitikRow({
                 </div>
             </div>
 
-            {canInput && (
-                <button
-                    type="button"
-                    onClick={() => setHapusOpen(true)}
-                    className="ck-link-accent"
-                    style={{
-                        fontSize: 12.5,
-                        fontWeight: 560,
-                        color: ckColors.danger,
-                        background: 'none',
-                        border: 'none',
-                        padding: 0,
-                        cursor: 'pointer',
-                        flex: 'none',
-                    }}
-                >
-                    Hapus
-                </button>
-            )}
+            <button
+                type="button"
+                onClick={() => setHapusOpen(true)}
+                className="ck-link-accent"
+                style={{
+                    fontSize: 12.5,
+                    fontWeight: 560,
+                    color: ckColors.danger,
+                    background: 'none',
+                    border: 'none',
+                    padding: 0,
+                    cursor: 'pointer',
+                    flex: 'none',
+                }}
+            >
+                Hapus
+            </button>
 
             <CkDialog open={hapusOpen} onOpenChange={setHapusOpen}>
                 <CkDialogContent>
@@ -469,9 +465,6 @@ export function PetaKoordinat({
     alamat: string | null;
     titik: TitikKoordinat[];
 }) {
-    const { auth } = usePage().props;
-    const canInput = auth.user.can_input;
-
     const containerRef = useRef<HTMLDivElement>(null);
     const mapRef = useRef<L.Map | null>(null);
     const markerLayerRef = useRef<L.LayerGroup | null>(null);
@@ -540,12 +533,12 @@ export function PetaKoordinat({
         };
     }, []);
 
-    // Klik peta memilih posisi. Handler dipasang di effect terpisah karena
-    // bergantung pada hak akses, sementara peta itu sendiri hanya dibuat sekali.
+    // Klik peta memilih posisi. Handler dipasang di effect terpisah dari
+    // pembuatan peta supaya petanya sendiri cukup dibuat sekali.
     useEffect(() => {
         const map = mapRef.current;
 
-        if (!map || !canInput) {
+        if (!map) {
             return;
         }
 
@@ -559,7 +552,7 @@ export function PetaKoordinat({
         return () => {
             map.off('click', onClick);
         };
-    }, [canInput]);
+    }, []);
 
     // Sinkronkan penanda titik tersimpan tiap kali daftarnya berubah.
     useEffect(() => {
@@ -689,23 +682,18 @@ export function PetaKoordinat({
                     </div>
                 </div>
 
-                {canInput && (
-                    <KotakCari
-                        onPilih={(h) =>
-                            mapRef.current?.flyTo(
-                                [h.lat, h.lng],
-                                ZOOM_HASIL_CARI,
-                            )
-                        }
-                    />
-                )}
+                <KotakCari
+                    onPilih={(h) =>
+                        mapRef.current?.flyTo([h.lat, h.lng], ZOOM_HASIL_CARI)
+                    }
+                />
 
                 <div
                     ref={containerRef}
                     style={{ height: 280, width: '100%', zIndex: 0 }}
                 />
 
-                {canInput && formOpen && (
+                {formOpen && (
                     <div
                         style={{
                             padding: '15px 18px 17px',
@@ -816,12 +804,7 @@ export function PetaKoordinat({
                 )}
 
                 {titik.map((t) => (
-                    <TitikRow
-                        key={t.id}
-                        titik={t}
-                        canInput={canInput}
-                        onSorot={sorot}
-                    />
+                    <TitikRow key={t.id} titik={t} onSorot={sorot} />
                 ))}
 
                 {!formOpen && (
@@ -843,32 +826,28 @@ export function PetaKoordinat({
                             }}
                         >
                             {titik.length === 0
-                                ? canInput
-                                    ? 'Belum ada titik — klik di peta untuk memilih posisinya.'
-                                    : 'Belum ada titik koordinat yang ditandai.'
+                                ? 'Belum ada titik — klik di peta untuk memilih posisinya.'
                                 : `${titik.length} titik tercatat`}
                         </div>
 
-                        {canInput && (
-                            <button
-                                type="button"
-                                onClick={() => setFormOpen(true)}
-                                className="ck-link-accent"
-                                style={{
-                                    font: 'inherit',
-                                    fontSize: 12.5,
-                                    fontWeight: 560,
-                                    color: ckColors.accent,
-                                    background: 'none',
-                                    border: 'none',
-                                    padding: 0,
-                                    cursor: 'pointer',
-                                    flex: 'none',
-                                }}
-                            >
-                                + Tandai titik
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => setFormOpen(true)}
+                            className="ck-link-accent"
+                            style={{
+                                font: 'inherit',
+                                fontSize: 12.5,
+                                fontWeight: 560,
+                                color: ckColors.accent,
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                cursor: 'pointer',
+                                flex: 'none',
+                            }}
+                        >
+                            + Tandai titik
+                        </button>
                     </div>
                 )}
             </CkCard>

@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import '@/components/cipta-karya/cipta-karya.css';
 import { KartuPaket } from '@/components/cipta-karya/kartu-paket';
@@ -177,7 +177,6 @@ export default function Dashboard({
     tahunDipilih,
     tahunTersedia,
 }: DashboardProps) {
-    const { auth } = usePage().props;
     const [query, setQuery] = useState('');
     const [saringan, setSaringan] = useState<Saringan>('semua');
 
@@ -256,39 +255,37 @@ export default function Dashboard({
                             />
                         </div>
 
-                        {auth.user.can_input && (
-                            <Link
-                                href={create()}
-                                className="ck-btn-accent"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 6,
-                                    padding: '8px 14px',
-                                    borderRadius: 10,
-                                    background: ckColors.accent,
-                                    color: '#fff',
-                                    fontSize: 13.5,
-                                    fontWeight: 590,
-                                    letterSpacing: '-.01em',
-                                    whiteSpace: 'nowrap',
-                                    flex: 'none',
-                                }}
+                        <Link
+                            href={create()}
+                            className="ck-btn-accent"
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 6,
+                                padding: '8px 14px',
+                                borderRadius: 10,
+                                background: ckColors.accent,
+                                color: '#fff',
+                                fontSize: 13.5,
+                                fontWeight: 590,
+                                letterSpacing: '-.01em',
+                                whiteSpace: 'nowrap',
+                                flex: 'none',
+                            }}
+                        >
+                            <svg
+                                width="13"
+                                height="13"
+                                viewBox="0 0 15 15"
+                                fill="none"
+                                stroke="#fff"
+                                strokeWidth="1.9"
+                                strokeLinecap="round"
                             >
-                                <svg
-                                    width="13"
-                                    height="13"
-                                    viewBox="0 0 15 15"
-                                    fill="none"
-                                    stroke="#fff"
-                                    strokeWidth="1.9"
-                                    strokeLinecap="round"
-                                >
-                                    <path d="M7.5 2v11M2 7.5h11" />
-                                </svg>
-                                Paket baru
-                            </Link>
-                        )}
+                                <path d="M7.5 2v11M2 7.5h11" />
+                            </svg>
+                            Paket baru
+                        </Link>
                     </>
                 }
             >

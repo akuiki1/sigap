@@ -62,22 +62,12 @@ class TitikKoordinatPaketTest extends TestCase
             ->assertSessionHasErrors('latitude');
     }
 
-    public function test_auditor_cannot_mark_a_coordinate(): void
+    public function test_guests_cannot_mark_a_coordinate(): void
     {
-        $this->actingAs(User::factory()->auditor()->create());
         $paket = Paket::factory()->create();
 
         $this->post(route('paket.koordinat.store', $paket), $this->validPayload())
-            ->assertForbidden();
-    }
-
-    public function test_pengawas_cannot_mark_a_coordinate(): void
-    {
-        $this->actingAs(User::factory()->pengawas()->create());
-        $paket = Paket::factory()->create();
-
-        $this->post(route('paket.koordinat.store', $paket), $this->validPayload())
-            ->assertForbidden();
+            ->assertRedirect(route('login'));
     }
 
     protected function markedTitik(): TitikKoordinatPaket
@@ -99,12 +89,13 @@ class TitikKoordinatPaketTest extends TestCase
         $this->assertDatabaseMissing('titik_koordinat_paket', ['id' => $titik->id]);
     }
 
-    public function test_auditor_cannot_delete_a_coordinate(): void
+    public function test_guests_cannot_delete_a_coordinate(): void
     {
         $titik = $this->markedTitik();
-        $this->actingAs(User::factory()->auditor()->create());
+        $this->app['auth']->guard()->logout();
 
-        $this->delete(route('koordinat.destroy', $titik))->assertForbidden();
+        $this->delete(route('koordinat.destroy', $titik))
+            ->assertRedirect(route('login'));
 
         $this->assertDatabaseHas('titik_koordinat_paket', ['id' => $titik->id]);
     }

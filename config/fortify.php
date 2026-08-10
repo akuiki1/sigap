@@ -161,7 +161,10 @@ return [
     */
 
     'features' => [
-        Features::registration(),
+        // Features::registration() sengaja dimatikan: dengan peran tinggal
+        // admin & operator, tidak ada lagi peran "hanya lihat" yang aman
+        // diberikan otomatis — siapa pun yang mendaftar sendiri akan langsung
+        // bisa mengubah data paket. Akun dibuat admin lewat /pengguna.
         Features::resetPasswords(),
         Features::emailVerification(),
         Features::twoFactorAuthentication([

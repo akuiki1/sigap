@@ -1,4 +1,4 @@
-export type Role = 'admin' | 'operator' | 'pengawas' | 'auditor';
+export type Role = 'admin' | 'operator';
 
 export type User = {
     id: number;
@@ -7,8 +7,11 @@ export type User = {
     avatar?: string;
     role: Role;
     role_label: string;
-    can_input: boolean;
-    can_verify: boolean;
+    /**
+     * Boleh mengelola akun pengguna — satu-satunya hak yang membedakan peran
+     * (lihat App\Enums\Role). Dihitung backend lewat accessor; jangan
+     * menurunkannya lagi dari `role` di sisi TypeScript.
+     */
     is_admin: boolean;
     email_verified_at: string | null;
     two_factor_enabled?: boolean;

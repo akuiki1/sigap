@@ -74,24 +74,13 @@ class ProgresPaketTest extends TestCase
             ->assertSessionHasErrors('foto.0');
     }
 
-    public function test_auditor_cannot_record_progres(): void
+    public function test_guests_cannot_record_progres(): void
     {
         Storage::fake('local');
-        $this->actingAs(User::factory()->auditor()->create());
         $paket = Paket::factory()->create();
 
         $this->post(route('paket.progres.store', $paket), $this->validPayload())
-            ->assertForbidden();
-    }
-
-    public function test_pengawas_cannot_record_progres(): void
-    {
-        Storage::fake('local');
-        $this->actingAs(User::factory()->pengawas()->create());
-        $paket = Paket::factory()->create();
-
-        $this->post(route('paket.progres.store', $paket), $this->validPayload())
-            ->assertForbidden();
+            ->assertRedirect(route('login'));
     }
 
     protected function recordedProgres(): ProgresPaket
@@ -105,10 +94,10 @@ class ProgresPaketTest extends TestCase
         return ProgresPaket::firstWhere('paket_id', $paket->id);
     }
 
-    public function test_pengawas_can_verify_a_progres_entry(): void
+    public function test_a_progres_entry_can_be_verified(): void
     {
         $progres = $this->recordedProgres();
-        $this->actingAs(User::factory()->pengawas()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $this->patch(route('progres.verify', $progres), [
             'keputusan' => 'diverifikasi',
@@ -123,20 +112,20 @@ class ProgresPaketTest extends TestCase
     public function test_rejecting_a_progres_entry_requires_a_note(): void
     {
         $progres = $this->recordedProgres();
-        $this->actingAs(User::factory()->pengawas()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $this->patch(route('progres.verify', $progres), [
             'keputusan' => 'ditolak',
         ])->assertSessionHasErrors('catatan_verifikasi');
     }
 
-    public function test_operator_cannot_verify_progres(): void
+    public function test_guests_cannot_verify_progres(): void
     {
         $progres = $this->recordedProgres();
-        $this->actingAs(User::factory()->operator()->create());
+        $this->app['auth']->guard()->logout();
 
         $this->patch(route('progres.verify', $progres), [
             'keputusan' => 'diverifikasi',
-        ])->assertForbidden();
+        ])->assertRedirect(route('login'));
     }
 }

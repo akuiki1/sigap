@@ -1,4 +1,4 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { CkCard, CkRow, CkChevron } from '@/components/cipta-karya/primitives';
 import { CiptaKaryaShell } from '@/components/cipta-karya/shell';
 import { ckColors } from '@/components/cipta-karya/tokens';
@@ -8,7 +8,6 @@ import { create, index, show } from '@/routes/paket';
 import type { Paginated, Paket } from '@/types';
 
 export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
-    const { auth } = usePage().props;
     const { data, current_page, last_page, from, to, total } = pakets;
 
     return (
@@ -58,38 +57,36 @@ export default function PaketIndex({ pakets }: { pakets: Paginated<Paket> }) {
                                 </h1>
                             </div>
 
-                            {auth.user.can_input && (
-                                <Link
-                                    href={create()}
-                                    className="ck-btn-accent"
-                                    style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 6,
-                                        padding: '10px 16px',
-                                        borderRadius: 12,
-                                        background: ckColors.accent,
-                                        color: '#fff',
-                                        cursor: 'pointer',
-                                        fontSize: 14,
-                                        fontWeight: 590,
-                                        letterSpacing: '-.01em',
-                                    }}
+                            <Link
+                                href={create()}
+                                className="ck-btn-accent"
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 6,
+                                    padding: '10px 16px',
+                                    borderRadius: 12,
+                                    background: ckColors.accent,
+                                    color: '#fff',
+                                    cursor: 'pointer',
+                                    fontSize: 14,
+                                    fontWeight: 590,
+                                    letterSpacing: '-.01em',
+                                }}
+                            >
+                                <svg
+                                    width="14"
+                                    height="14"
+                                    viewBox="0 0 16 16"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    strokeWidth="2"
+                                    strokeLinecap="round"
                                 >
-                                    <svg
-                                        width="14"
-                                        height="14"
-                                        viewBox="0 0 16 16"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                    >
-                                        <path d="M8 2.5v11M2.5 8h11" />
-                                    </svg>
-                                    Tambah Paket
-                                </Link>
-                            )}
+                                    <path d="M8 2.5v11M2.5 8h11" />
+                                </svg>
+                                Tambah Paket
+                            </Link>
                         </header>
 
                         <CkCard>

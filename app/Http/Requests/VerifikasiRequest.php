@@ -24,8 +24,8 @@ abstract class VerifikasiRequest extends FormRequest
     abstract protected function subjek(): ?Model;
 
     /**
-     * Hanya peran ber-hak-verifikasi (admin/pengawas) yang boleh menyetujui
-     * atau menolak; aturannya sendiri ada di policy masing-masing model.
+     * Siapa yang boleh menyetujui atau menolak ditentukan policy masing-masing
+     * model (BerkasPolicy::verify, ProgresPaketPolicy::verify), bukan di sini.
      */
     public function authorize(): bool
     {

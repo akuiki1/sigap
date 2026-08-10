@@ -50,14 +50,12 @@ class DatabaseSeeder extends Seeder
      */
     private function seedAkun(): void
     {
-        // Akun uji utama = admin, agar dev bisa mengakses semua fitur (input,
-        // verifikasi, hapus, kelola user) tanpa berpindah akun. Sisanya satu
-        // contoh tiap peran untuk menguji batas hak akses di aplikasi.
+        // Akun uji utama = admin, agar dev bisa mengakses semua fitur termasuk
+        // kelola akun. Satu operator sebagai pembanding: bedanya cuma menu
+        // Pengguna, dan itu perlu bisa dilihat langsung saat berpindah akun.
         $akun = [
             ['Test User', 'test@example.com', Role::Admin],
             ['Operator PPTK', 'operator@example.com', Role::Operator],
-            ['Pengawas PPK', 'pengawas@example.com', Role::Pengawas],
-            ['Auditor', 'auditor@example.com', Role::Auditor],
         ];
 
         foreach ($akun as [$nama, $email, $peran]) {
@@ -149,7 +147,7 @@ class DatabaseSeeder extends Seeder
     private function seedBerkasContoh(): void
     {
         $operator = User::query()->where('email', 'operator@example.com')->first();
-        $pengawas = User::query()->where('email', 'pengawas@example.com')->first();
+        $verifikator = User::query()->where('email', 'test@example.com')->first();
 
         if ($operator === null) {
             return;
@@ -173,9 +171,9 @@ class DatabaseSeeder extends Seeder
             ->pluck('id');
 
         foreach ($dokumen as $id) {
-            // Sebagian sudah diverifikasi pengawas, sisanya masih diajukan —
-            // supaya antrean verifikasi di layar audit tidak kosong melompong.
-            $diverifikasi = $pengawas !== null && fake()->boolean(65);
+            // Sebagian sudah diverifikasi, sisanya masih diajukan — supaya
+            // antrean verifikasi di panel dokumen tidak kosong melompong.
+            $diverifikasi = $verifikator !== null && fake()->boolean(65);
 
             $rows[] = [
                 'attachable_type' => 'dokumen_paket',
@@ -188,7 +186,7 @@ class DatabaseSeeder extends Seeder
                 'mime_type' => 'application/pdf',
                 'status_verifikasi' => $diverifikasi ? 'diverifikasi' : 'diajukan',
                 'uploaded_by' => $operator->id,
-                'diverifikasi_by' => $diverifikasi ? $pengawas->id : null,
+                'diverifikasi_by' => $diverifikasi ? $verifikator->id : null,
                 'diverifikasi_pada' => $diverifikasi ? $now : null,
                 'created_at' => $now,
                 'updated_at' => $now,

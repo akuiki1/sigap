@@ -1,4 +1,4 @@
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import { useCallback, useState } from 'react';
 import PaketController from '@/actions/App/Http/Controllers/PaketController';
 import '@/components/cipta-karya/cipta-karya.css';
@@ -80,7 +80,6 @@ export default function PaketShow({
     progresAgregat,
     titikKoordinat,
 }: PaketShowProps) {
-    const { auth } = usePage().props;
     const [tab, setTab] = useState<Tab>(tabDariUrl);
 
     // Panel dokumen & modal unggah memegang id, bukan objek item: props halaman
@@ -223,82 +222,76 @@ export default function PaketShow({
                                 </div>
                             </div>
 
-                            {(auth.user.can_input || auth.user.is_admin) && (
-                                <div
+                            <div
+                                style={{
+                                    display: 'flex',
+                                    gap: 14,
+                                    fontSize: 13,
+                                    flex: 'none',
+                                }}
+                            >
+                                <Link
+                                    href={edit(data.id)}
+                                    className="ck-link-accent"
                                     style={{
-                                        display: 'flex',
-                                        gap: 14,
-                                        fontSize: 13,
-                                        flex: 'none',
+                                        color: ckColors.accent,
+                                        fontWeight: 520,
                                     }}
                                 >
-                                    {auth.user.can_input && (
-                                        <Link
-                                            href={edit(data.id)}
-                                            className="ck-link-accent"
+                                    Ubah
+                                </Link>
+
+                                <CkDialog>
+                                    <CkDialogTrigger asChild>
+                                        <button
+                                            type="button"
                                             style={{
-                                                color: ckColors.accent,
+                                                color: ckColors.danger,
                                                 fontWeight: 520,
+                                                background: 'none',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                font: 'inherit',
+                                                padding: 0,
                                             }}
                                         >
-                                            Ubah
-                                        </Link>
-                                    )}
+                                            Hapus
+                                        </button>
+                                    </CkDialogTrigger>
 
-                                    {auth.user.is_admin && (
-                                        <CkDialog>
-                                            <CkDialogTrigger asChild>
-                                                <button
-                                                    type="button"
-                                                    style={{
-                                                        color: ckColors.danger,
-                                                        fontWeight: 520,
-                                                        background: 'none',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        font: 'inherit',
-                                                        padding: 0,
-                                                    }}
-                                                >
-                                                    Hapus
-                                                </button>
-                                            </CkDialogTrigger>
+                                    <CkDialogContent>
+                                        <CkDialogTitle>
+                                            Hapus paket ini?
+                                        </CkDialogTitle>
+                                        <CkDialogDescription>
+                                            Paket {data.kode_paket} akan dihapus
+                                            permanen dan tidak dapat
+                                            dikembalikan.
+                                        </CkDialogDescription>
 
-                                            <CkDialogContent>
-                                                <CkDialogTitle>
-                                                    Hapus paket ini?
-                                                </CkDialogTitle>
-                                                <CkDialogDescription>
-                                                    Paket {data.kode_paket} akan
-                                                    dihapus permanen dan tidak
-                                                    dapat dikembalikan.
-                                                </CkDialogDescription>
+                                        <CkDialogFooter>
+                                            <CkDialogClose asChild>
+                                                <CkButton variant="ghost">
+                                                    Batal
+                                                </CkButton>
+                                            </CkDialogClose>
 
-                                                <CkDialogFooter>
-                                                    <CkDialogClose asChild>
-                                                        <CkButton variant="ghost">
-                                                            Batal
-                                                        </CkButton>
-                                                    </CkDialogClose>
-
-                                                    <CkButton
-                                                        variant="danger"
-                                                        onClick={() =>
-                                                            router.delete(
-                                                                PaketController.destroy(
-                                                                    data.id,
-                                                                ).url,
-                                                            )
-                                                        }
-                                                    >
-                                                        Hapus Paket
-                                                    </CkButton>
-                                                </CkDialogFooter>
-                                            </CkDialogContent>
-                                        </CkDialog>
-                                    )}
-                                </div>
-                            )}
+                                            <CkButton
+                                                variant="danger"
+                                                onClick={() =>
+                                                    router.delete(
+                                                        PaketController.destroy(
+                                                            data.id,
+                                                        ).url,
+                                                    )
+                                                }
+                                            >
+                                                Hapus Paket
+                                            </CkButton>
+                                        </CkDialogFooter>
+                                    </CkDialogContent>
+                                </CkDialog>
+                            </div>
                         </div>
 
                         <div
@@ -392,7 +385,6 @@ export default function PaketShow({
                     {tab === 'dokumen' && (
                         <PaketDokumen
                             sections={sections}
-                            canInput={auth.user.can_input}
                             onLihat={bukaPanel}
                             onUnggah={bukaUnggah}
                             onUnggahBaru={() => bukaUnggah(null)}
@@ -405,16 +397,12 @@ export default function PaketShow({
                             progresAgregat={progresAgregat}
                             riwayatProgres={riwayatProgres}
                             titikKoordinat={titikKoordinat}
-                            canInput={auth.user.can_input}
-                            canVerify={auth.user.can_verify}
                         />
                     )}
                 </div>
 
                 <DokumenPanel
                     item={panelItem}
-                    canInput={auth.user.can_input}
-                    canVerify={auth.user.can_verify}
                     onTutup={() => setPanelId(null)}
                     onGantiBerkas={bukaUnggah}
                 />

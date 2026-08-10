@@ -92,14 +92,12 @@ class DokumenPaketTest extends TestCase
         $this->assertSame(StatusDokumen::Belum, $dokumen->refresh()->status);
     }
 
-    public function test_auditor_cannot_change_checklist_status(): void
+    public function test_guests_cannot_change_checklist_status(): void
     {
-        $this->actingAs(User::factory()->auditor()->create());
-
         $paket = Paket::factory()->create();
         $item = $this->checklistItem();
 
         $this->patch(route('paket.dokumen.update', ['paket' => $paket, 'checklistDokumen' => $item]))
-            ->assertForbidden();
+            ->assertRedirect(route('login'));
     }
 }

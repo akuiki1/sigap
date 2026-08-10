@@ -7,12 +7,12 @@ use App\Models\TitikKoordinatPaket;
 use App\Models\User;
 
 /**
- * Aturan "siapa boleh apa" atas titik koordinat paket. Melihat dibuka untuk
- * semua peran (bagian dari halaman detail paket); menandai & menghapus titik
- * dibatasi peran ber-hak-input, sama seperti ProgresPaketPolicy.
+ * Aturan "siapa boleh apa" atas titik koordinat paket. Sama seperti
+ * App\Policies\PaketPolicy: admin & operator sama-sama berhak penuh, jadi
+ * gerbangnya tinggal autentikasi.
  *
  * Tidak ada `verify` di sini: titik koordinat adalah metadata lokasi, bukan
- * bukti yang perlu disetujui pengawas seperti berkas & klaim progres.
+ * bukti yang perlu disetujui seperti berkas & klaim progres.
  */
 class TitikKoordinatPaketPolicy
 {
@@ -22,11 +22,11 @@ class TitikKoordinatPaketPolicy
      */
     public function create(User $user, Paket $paket): bool
     {
-        return $user->bisaInput();
+        return true;
     }
 
     public function delete(User $user, TitikKoordinatPaket $titik): bool
     {
-        return $user->bisaInput();
+        return true;
     }
 }

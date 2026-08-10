@@ -5,21 +5,19 @@ namespace App\Enums;
 /**
  * Peran pengguna di lingkungan dinas. Satu pengguna memegang satu peran;
  * cukup untuk kebutuhan SIGAP tanpa perlu tabel izin granular / paket eksternal.
- * Aturan "siapa boleh apa" dijabarkan di App\Policies (lihat PaketPolicy).
+ *
+ * Hanya dua peran, dan bedanya cuma satu: admin boleh mengelola akun pengguna.
+ * Seluruh data paket — input, unggah, verifikasi, sampai hapus — terbuka untuk
+ * keduanya. Peran pengawas & auditor pernah ada tapi tidak pernah dipakai di
+ * dinas: yang menginput dan yang memverifikasi ternyata orang yang sama.
  */
 enum Role: string
 {
-    /** Kelola seluruh data, hapus paket, dan kelola akun pengguna. */
+    /** Kelola seluruh data paket, plus kelola akun pengguna. */
     case Admin = 'admin';
 
-    /** Staf/PPTK: input & ubah paket, unggah berkas, catat progres. */
+    /** Staf/PPTK: kelola seluruh data paket, tanpa akses kelola akun. */
     case Operator = 'operator';
-
-    /** PPK/konsultan pengawas: verifikasi berkas & progres yang dilaporkan. */
-    case Pengawas = 'pengawas';
-
-    /** Auditor/pemeriksa: hanya melihat, tidak mengubah apa pun. */
-    case Auditor = 'auditor';
 
     /**
      * Label siap tampil untuk antarmuka berbahasa Indonesia.
@@ -29,25 +27,16 @@ enum Role: string
         return match ($this) {
             self::Admin => 'Administrator',
             self::Operator => 'Operator',
-            self::Pengawas => 'Pengawas',
-            self::Auditor => 'Auditor',
         };
     }
 
     /**
-     * Bisakah peran ini menginput/mengubah data (paket, berkas, progres)?
+     * Bisakah peran ini membuat, mengubah peran, dan menghapus akun pengguna?
+     * Satu-satunya kewenangan yang membedakan admin dari operator.
      */
-    public function bisaInput(): bool
+    public function bisaKelolaUser(): bool
     {
-        return in_array($this, [self::Admin, self::Operator], true);
-    }
-
-    /**
-     * Bisakah peran ini memverifikasi berkas & progres yang dilaporkan?
-     */
-    public function bisaVerifikasi(): bool
-    {
-        return in_array($this, [self::Admin, self::Pengawas], true);
+        return $this === self::Admin;
     }
 
     /**

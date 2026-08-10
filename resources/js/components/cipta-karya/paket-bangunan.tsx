@@ -16,15 +16,11 @@ export function PaketBangunan({
     progresAgregat,
     riwayatProgres,
     titikKoordinat,
-    canInput,
-    canVerify,
 }: {
     paket: Paket;
     progresAgregat: ProgresAgregat;
     riwayatProgres: ProgresEntry[];
     titikKoordinat: TitikKoordinat[];
-    canInput: boolean;
-    canVerify: boolean;
 }) {
     const [catatOpen, setCatatOpen] = useState(false);
 
@@ -64,26 +60,24 @@ export function PaketBangunan({
                     </div>
                 </div>
 
-                {canInput && (
-                    <button
-                        type="button"
-                        onClick={() => setCatatOpen(true)}
-                        style={{
-                            font: 'inherit',
-                            fontSize: 13,
-                            fontWeight: 570,
-                            color: '#fff',
-                            background: ckColors.accent,
-                            border: 'none',
-                            borderRadius: 10,
-                            padding: '9px 15px',
-                            cursor: 'pointer',
-                            flex: 'none',
-                        }}
-                    >
-                        Catat progres
-                    </button>
-                )}
+                <button
+                    type="button"
+                    onClick={() => setCatatOpen(true)}
+                    style={{
+                        font: 'inherit',
+                        fontSize: 13,
+                        fontWeight: 570,
+                        color: '#fff',
+                        background: ckColors.accent,
+                        border: 'none',
+                        borderRadius: 10,
+                        padding: '9px 15px',
+                        cursor: 'pointer',
+                        flex: 'none',
+                    }}
+                >
+                    Catat progres
+                </button>
             </div>
 
             <div
@@ -162,7 +156,7 @@ export function PaketBangunan({
             <CkSectionLabel style={{ margin: '28px 0 8px 6px' }}>
                 Riwayat progres fisik
             </CkSectionLabel>
-            <ProgresRiwayat entries={riwayatProgres} canVerify={canVerify} />
+            <ProgresRiwayat entries={riwayatProgres} />
 
             <TambahProgresDialog
                 paketId={paket.id}

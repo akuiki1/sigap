@@ -15,7 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
+        // Hanya `appearance`: cookie `sidebar_state` ikut hilang bersama
+        // sidebar shadcn lama (lihat resources/js/components/cipta-karya/).
+        $middleware->encryptCookies(except: ['appearance']);
 
         $middleware->web(append: [
             HandleAppearance::class,

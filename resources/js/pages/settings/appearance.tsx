@@ -1,32 +1,37 @@
 import { Head } from '@inertiajs/react';
 import AppearanceTabs from '@/components/appearance-tabs';
-import Heading from '@/components/heading';
-import { edit as editAppearance } from '@/routes/appearance';
+import {
+    PengaturanSeksi,
+    PengaturanShell,
+} from '@/components/cipta-karya/pengaturan-shell';
+import { ckColors } from '@/components/cipta-karya/tokens';
 
 export default function Appearance() {
     return (
         <>
-            <Head title="Appearance settings" />
+            <Head title="Tampilan" />
 
-            <h1 className="sr-only">Appearance settings</h1>
+            <PengaturanShell aktif="tampilan">
+                <PengaturanSeksi
+                    judul="Tema"
+                    deskripsi="Pilihan disimpan di peramban ini saja, bukan di akun Anda — perangkat lain punya setelannya sendiri."
+                >
+                    <AppearanceTabs />
 
-            <div className="space-y-6">
-                <Heading
-                    variant="small"
-                    title="Appearance settings"
-                    description="Update the appearance settings for your account"
-                />
-                <AppearanceTabs />
-            </div>
+                    <p
+                        style={{
+                            fontSize: 12.5,
+                            color: ckColors.textMuted3,
+                            lineHeight: 1.5,
+                            margin: '14px 0 0',
+                        }}
+                    >
+                        Layar Cipta Karya (Ringkasan, Paket, Dokumen, Pengguna)
+                        memakai palet terangnya sendiri, jadi tema gelap baru
+                        terasa di halaman akun seperti ini.
+                    </p>
+                </PengaturanSeksi>
+            </PengaturanShell>
         </>
     );
 }
-
-Appearance.layout = {
-    breadcrumbs: [
-        {
-            title: 'Appearance settings',
-            href: editAppearance(),
-        },
-    ],
-};

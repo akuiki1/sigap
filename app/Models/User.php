@@ -31,20 +31,18 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read string $role_label
- * @property-read bool $can_input
- * @property-read bool $can_verify
  * @property-read bool $is_admin
  */
-// `role` sengaja TIDAK masuk Fillable: pendaftaran mandiri tidak boleh menaikkan
-// peran sendiri lewat mass-assignment. Perubahan peran hanya via jalur admin
-// eksplisit (mis. User::setRole()).
+// `role` sengaja TIDAK masuk Fillable: form apa pun yang menerima input pengguna
+// tidak boleh menaikkan peran lewat mass-assignment. Perubahan peran hanya lewat
+// jalur admin eksplisit (App\Http\Controllers\UserController).
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 // Diikutkan otomatis di setiap serialisasi (termasuk auth.user yang di-share ke
 // tiap halaman Inertia lewat HandleInertiaRequests), supaya frontend bisa
-// menyembunyikan tombol aksi tanpa duplikasi aturan App\Policies\PaketPolicy
+// menyembunyikan menu Pengguna tanpa duplikasi aturan App\Policies\UserPolicy
 // di sisi TypeScript — satu sumber kebenaran tetap di backend.
-#[Appends(['role_label', 'can_input', 'can_verify', 'is_admin'])]
+#[Appends(['role_label', 'is_admin'])]
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
@@ -66,7 +64,7 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Label peran siap tampil (mis. "Auditor"), untuk ditampilkan di UI.
+     * Label peran siap tampil (mis. "Operator"), untuk ditampilkan di UI.
      *
      * @return Attribute<string, never>
      */
@@ -84,36 +82,12 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * Bisa menginput/mengubah data (paket, berkas, progres). Dipakai baik
-     * dari policy (App\Policies\PaketPolicy) maupun accessor can_input di bawah.
+     * Bisa mengelola akun pengguna lain. Dipakai baik dari policy
+     * (App\Policies\UserPolicy) maupun accessor is_admin di bawah.
      */
-    public function bisaInput(): bool
+    public function bisaKelolaUser(): bool
     {
-        return $this->role->bisaInput();
-    }
-
-    /**
-     * Bisa memverifikasi berkas & progres yang dilaporkan.
-     */
-    public function bisaVerifikasi(): bool
-    {
-        return $this->role->bisaVerifikasi();
-    }
-
-    /**
-     * @return Attribute<bool, never>
-     */
-    protected function canInput(): Attribute
-    {
-        return Attribute::make(get: fn () => $this->bisaInput());
-    }
-
-    /**
-     * @return Attribute<bool, never>
-     */
-    protected function canVerify(): Attribute
-    {
-        return Attribute::make(get: fn () => $this->bisaVerifikasi());
+        return $this->role->bisaKelolaUser();
     }
 
     /**
@@ -121,6 +95,6 @@ class User extends Authenticatable implements PasskeyUser
      */
     protected function isAdmin(): Attribute
     {
-        return Attribute::make(get: fn () => $this->role === Role::Admin);
+        return Attribute::make(get: fn () => $this->bisaKelolaUser());
     }
 }

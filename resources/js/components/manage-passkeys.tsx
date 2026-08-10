@@ -1,7 +1,7 @@
 import { router } from '@inertiajs/react';
 import { KeyRound } from 'lucide-react';
 import { destroy } from '@/actions/Laravel/Passkeys/Http/Controllers/PasskeyRegistrationController';
-import Heading from '@/components/heading';
+import { PengaturanSeksi } from '@/components/cipta-karya/pengaturan-shell';
 import PasskeyItem from '@/components/passkey-item';
 import PasskeyRegistration from '@/components/passkey-register';
 import type { Passkey } from '@/types/auth';
@@ -44,14 +44,11 @@ export default function ManagePasskeys(props: Props) {
     }
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Passkeys"
-                description="Manage your passkeys for passwordless sign-in"
-            />
-
-            <div className="overflow-hidden rounded-lg border border-border">
+        <PengaturanSeksi
+            judul="Passkey"
+            deskripsi="Masuk tanpa kata sandi memakai sidik jari, PIN, atau kunci keamanan perangkat."
+        >
+            <div className="mb-6 overflow-hidden rounded-lg border border-border">
                 {passkeys.length > 0 ? (
                     passkeys.map((passkey) => (
                         <PasskeyItem
@@ -66,6 +63,6 @@ export default function ManagePasskeys(props: Props) {
             </div>
 
             <PasskeyRegistration onSuccess={handleRegisterSuccess} />
-        </div>
+        </PengaturanSeksi>
     );
 }

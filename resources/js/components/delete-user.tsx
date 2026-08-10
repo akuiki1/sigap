@@ -1,120 +1,118 @@
 import { Form } from '@inertiajs/react';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-import Heading from '@/components/heading';
-import InputError from '@/components/input-error';
-import PasswordInput from '@/components/password-input';
-import { Button } from '@/components/ui/button';
 import {
-    Dialog,
-    DialogClose,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+    CkButton,
+    CkDialog,
+    CkDialogContent,
+    CkDialogDescription,
+    CkDialogTitle,
+    CkField,
+    CkPasswordInput,
+} from '@/components/cipta-karya/ck-dialog';
+import { PengaturanSeksi } from '@/components/cipta-karya/pengaturan-shell';
+import { ckColors } from '@/components/cipta-karya/tokens';
 
+/**
+ * Hapus akun sendiri. Admin terakhir ditolak di
+ * App\Http\Requests\Settings\ProfileDeleteRequest — pesannya muncul sebagai
+ * galat pada kolom kata sandi di dialog ini.
+ */
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
+    const [buka, setBuka] = useState(false);
 
     return (
-        <div className="space-y-6">
-            <Heading
-                variant="small"
-                title="Delete account"
-                description="Delete your account and all of its resources"
-            />
-            <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">
-                <div className="relative space-y-0.5 text-red-600 dark:text-red-100">
-                    <p className="font-medium">Warning</p>
-                    <p className="text-sm">
-                        Please proceed with caution, this cannot be undone.
-                    </p>
-                </div>
+        <PengaturanSeksi
+            judul="Hapus akun"
+            deskripsi="Akun beserta akses ke seluruh data paket dihapus permanen dan tidak bisa dikembalikan."
+            nada="bahaya"
+        >
+            <CkButton
+                variant="danger"
+                onClick={() => setBuka(true)}
+                data-test="delete-user-button"
+            >
+                Hapus akun saya
+            </CkButton>
 
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button
-                            variant="destructive"
-                            data-test="delete-user-button"
-                        >
-                            Delete account
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogTitle>
-                            Are you sure you want to delete your account?
-                        </DialogTitle>
-                        <DialogDescription>
-                            Once your account is deleted, all of its resources
-                            and data will also be permanently deleted. Please
-                            enter your password to confirm you would like to
-                            permanently delete your account.
-                        </DialogDescription>
+            <CkDialog open={buka} onOpenChange={setBuka}>
+                <CkDialogContent>
+                    <CkDialogTitle>Hapus akun ini?</CkDialogTitle>
+                    <CkDialogDescription>
+                        Masukkan kata sandi Anda untuk mengonfirmasi. Setelah
+                        dihapus, akun dan seluruh aksesnya hilang permanen.
+                    </CkDialogDescription>
 
-                        <Form
-                            {...ProfileController.destroy.form()}
-                            options={{
-                                preserveScroll: true,
-                            }}
-                            onError={() => passwordInput.current?.focus()}
-                            resetOnSuccess
-                            className="space-y-6"
-                        >
-                            {({ resetAndClearErrors, processing, errors }) => (
-                                <>
-                                    <div className="grid gap-2">
-                                        <Label
-                                            htmlFor="password"
-                                            className="sr-only"
-                                        >
-                                            Password
-                                        </Label>
-
-                                        <PasswordInput
+                    <Form
+                        {...ProfileController.destroy.form()}
+                        options={{ preserveScroll: true }}
+                        onError={() => passwordInput.current?.focus()}
+                        resetOnSuccess
+                    >
+                        {({ resetAndClearErrors, processing, errors }) => (
+                            <>
+                                <div style={{ marginTop: 18 }}>
+                                    <CkField
+                                        label="Kata sandi"
+                                        error={errors.password}
+                                    >
+                                        <CkPasswordInput
                                             id="password"
                                             name="password"
                                             ref={passwordInput}
-                                            placeholder="Password"
                                             autoComplete="current-password"
                                         />
+                                    </CkField>
+                                </div>
 
-                                        <InputError message={errors.password} />
-                                    </div>
+                                <div
+                                    style={{
+                                        display: 'flex',
+                                        justifyContent: 'flex-end',
+                                        gap: 9,
+                                        marginTop: 20,
+                                    }}
+                                >
+                                    <CkButton
+                                        variant="ghost"
+                                        onClick={() => {
+                                            resetAndClearErrors();
+                                            setBuka(false);
+                                        }}
+                                    >
+                                        Batal
+                                    </CkButton>
 
-                                    <DialogFooter className="gap-2">
-                                        <DialogClose asChild>
-                                            <Button
-                                                variant="secondary"
-                                                onClick={() =>
-                                                    resetAndClearErrors()
-                                                }
-                                            >
-                                                Cancel
-                                            </Button>
-                                        </DialogClose>
+                                    <CkButton
+                                        type="submit"
+                                        variant="danger"
+                                        disabled={processing}
+                                        data-test="confirm-delete-user-button"
+                                        style={{ color: '#fff' }}
+                                    >
+                                        {processing
+                                            ? 'Menghapus…'
+                                            : 'Hapus Akun'}
+                                    </CkButton>
+                                </div>
+                            </>
+                        )}
+                    </Form>
+                </CkDialogContent>
+            </CkDialog>
 
-                                        <Button
-                                            variant="destructive"
-                                            disabled={processing}
-                                            asChild
-                                        >
-                                            <button
-                                                type="submit"
-                                                data-test="confirm-delete-user-button"
-                                            >
-                                                Delete account
-                                            </button>
-                                        </Button>
-                                    </DialogFooter>
-                                </>
-                            )}
-                        </Form>
-                    </DialogContent>
-                </Dialog>
-            </div>
-        </div>
+            <p
+                style={{
+                    fontSize: 12.5,
+                    color: ckColors.textMuted3,
+                    lineHeight: 1.5,
+                    margin: '12px 0 0',
+                }}
+            >
+                Administrator terakhir tidak bisa menghapus akunnya sendiri —
+                angkat administrator lain lebih dulu lewat halaman Pengguna.
+            </p>
+        </PengaturanSeksi>
     );
 }

@@ -112,14 +112,10 @@ function Pratinjau({
  */
 export function DokumenPanel({
     item,
-    canInput,
-    canVerify,
     onTutup,
     onGantiBerkas,
 }: {
     item: DokumenChecklistItem | null;
-    canInput: boolean;
-    canVerify: boolean;
     onTutup: () => void;
     onGantiBerkas: (item: DokumenChecklistItem) => void;
 }) {
@@ -320,25 +316,23 @@ export function DokumenPanel({
                             </a>
                         )}
 
-                        {canInput && (
-                            <button
-                                type="button"
-                                onClick={() => onGantiBerkas(item)}
-                                style={{
-                                    font: 'inherit',
-                                    fontSize: 13,
-                                    fontWeight: 550,
-                                    color: ckColors.text,
-                                    background: '#fff',
-                                    border: '1px solid rgba(0,0,0,.13)',
-                                    borderRadius: 10,
-                                    padding: '9px 15px',
-                                    cursor: 'pointer',
-                                }}
-                            >
-                                {berkas ? 'Ganti berkas' : 'Unggah berkas'}
-                            </button>
-                        )}
+                        <button
+                            type="button"
+                            onClick={() => onGantiBerkas(item)}
+                            style={{
+                                font: 'inherit',
+                                fontSize: 13,
+                                fontWeight: 550,
+                                color: ckColors.text,
+                                background: '#fff',
+                                border: '1px solid rgba(0,0,0,.13)',
+                                borderRadius: 10,
+                                padding: '9px 15px',
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {berkas ? 'Ganti berkas' : 'Unggah berkas'}
+                        </button>
                     </div>
 
                     {berkas && (
@@ -398,63 +392,56 @@ export function DokumenPanel({
                                         } ${berkas.diverifikasi_oleh} · ${tanggalJejak(berkas.diverifikasi_pada)}`}
                                 </div>
 
-                                {canVerify &&
-                                    berkas.status_verifikasi === 'diajukan' && (
-                                        <div
+                                {berkas.status_verifikasi === 'diajukan' && (
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            gap: 9,
+                                            marginTop: 12,
+                                        }}
+                                    >
+                                        <button
+                                            type="button"
+                                            disabled={verifying}
+                                            onClick={() =>
+                                                verifikasi('diverifikasi')
+                                            }
                                             style={{
-                                                display: 'flex',
-                                                gap: 9,
-                                                marginTop: 12,
+                                                font: 'inherit',
+                                                fontSize: 12.5,
+                                                fontWeight: 590,
+                                                color: '#fff',
+                                                background: ckColors.accent,
+                                                border: 'none',
+                                                borderRadius: 9,
+                                                padding: '7px 13px',
+                                                cursor: 'pointer',
+                                                opacity: verifying ? 0.6 : 1,
                                             }}
                                         >
-                                            <button
-                                                type="button"
-                                                disabled={verifying}
-                                                onClick={() =>
-                                                    verifikasi('diverifikasi')
-                                                }
-                                                style={{
-                                                    font: 'inherit',
-                                                    fontSize: 12.5,
-                                                    fontWeight: 590,
-                                                    color: '#fff',
-                                                    background: ckColors.accent,
-                                                    border: 'none',
-                                                    borderRadius: 9,
-                                                    padding: '7px 13px',
-                                                    cursor: 'pointer',
-                                                    opacity: verifying
-                                                        ? 0.6
-                                                        : 1,
-                                                }}
-                                            >
-                                                Setujui
-                                            </button>
-                                            <button
-                                                type="button"
-                                                disabled={verifying}
-                                                onClick={() =>
-                                                    setTolakOpen(true)
-                                                }
-                                                style={{
-                                                    font: 'inherit',
-                                                    fontSize: 12.5,
-                                                    fontWeight: 590,
-                                                    color: ckColors.danger,
-                                                    background: 'none',
-                                                    border: `1px solid ${ckColors.danger}`,
-                                                    borderRadius: 9,
-                                                    padding: '7px 13px',
-                                                    cursor: 'pointer',
-                                                    opacity: verifying
-                                                        ? 0.6
-                                                        : 1,
-                                                }}
-                                            >
-                                                Tolak
-                                            </button>
-                                        </div>
-                                    )}
+                                            Setujui
+                                        </button>
+                                        <button
+                                            type="button"
+                                            disabled={verifying}
+                                            onClick={() => setTolakOpen(true)}
+                                            style={{
+                                                font: 'inherit',
+                                                fontSize: 12.5,
+                                                fontWeight: 590,
+                                                color: ckColors.danger,
+                                                background: 'none',
+                                                border: `1px solid ${ckColors.danger}`,
+                                                borderRadius: 9,
+                                                padding: '7px 13px',
+                                                cursor: 'pointer',
+                                                opacity: verifying ? 0.6 : 1,
+                                            }}
+                                        >
+                                            Tolak
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}

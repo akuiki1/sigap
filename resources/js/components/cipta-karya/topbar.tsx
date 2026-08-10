@@ -10,20 +10,41 @@ import { useInitials } from '@/hooks/use-initials';
 import { dashboard } from '@/routes';
 import { index as dokumenIndex } from '@/routes/dokumen';
 import { index as paketIndex } from '@/routes/paket';
+import { index as penggunaIndex } from '@/routes/pengguna';
 import './cipta-karya.css';
 import { ckColors } from './tokens';
 
-export type CiptaKaryaNavKey = 'ringkasan' | 'paket' | 'dokumen';
+/**
+ * `pengaturan` sengaja tidak punya item di MENU: halaman itu dibuka dari
+ * dropdown avatar, jadi saat terbuka tidak ada satu pun item topbar yang
+ * menyala — dan itu memang yang diinginkan.
+ */
+export type CiptaKaryaNavKey =
+    'ringkasan' | 'paket' | 'dokumen' | 'pengguna' | 'pengaturan';
+
+type MenuItem = {
+    key: CiptaKaryaNavKey;
+    label: string;
+    href: string;
+    /** Hanya tampil untuk admin (lihat App\Policies\UserPolicy). */
+    adminSaja?: boolean;
+};
 
 /**
  * Navigasi pindah dari sidebar 246px ke baris atas panel: dengan menunya
  * horizontal, lebar penuh panel bisa dipakai isi halaman — cukup untuk grid
  * kartu paket tiga kolom di Ringkasan.
  */
-const MENU: { key: CiptaKaryaNavKey; label: string; href: string }[] = [
+const MENU: MenuItem[] = [
     { key: 'ringkasan', label: 'Ringkasan', href: dashboard().url },
     { key: 'paket', label: 'Paket', href: paketIndex().url },
     { key: 'dokumen', label: 'Dokumen', href: dokumenIndex().url },
+    {
+        key: 'pengguna',
+        label: 'Pengguna',
+        href: penggunaIndex().url,
+        adminSaja: true,
+    },
 ];
 
 function ChevronRight() {
@@ -107,7 +128,9 @@ export function CiptaKaryaTopbar({
                     overflowX: 'auto',
                 }}
             >
-                {MENU.map((item) => {
+                {MENU.filter(
+                    (item) => !item.adminSaja || auth.user.is_admin,
+                ).map((item) => {
                     const aktif = item.key === active;
 
                     return (

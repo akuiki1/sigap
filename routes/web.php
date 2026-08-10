@@ -7,6 +7,7 @@ use App\Http\Controllers\DokumenPaketController;
 use App\Http\Controllers\PaketController;
 use App\Http\Controllers\ProgresPaketController;
 use App\Http\Controllers\TitikKoordinatPaketController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -39,6 +40,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('koordinat.destroy');
 
     Route::get('dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
+
+    // Kelola akun. Terbuka hanya untuk admin — penjaganya App\Policies\UserPolicy
+    // lewat authorize() di controller & FormRequest, bukan middleware peran,
+    // supaya aturannya satu tempat dengan policy lain.
+    Route::get('pengguna', [UserController::class, 'index'])->name('pengguna.index');
+    Route::post('pengguna', [UserController::class, 'store'])->name('pengguna.store');
+    Route::patch('pengguna/{pengguna}', [UserController::class, 'update'])->name('pengguna.update');
+    Route::delete('pengguna/{pengguna}', [UserController::class, 'destroy'])->name('pengguna.destroy');
 });
 
 require __DIR__.'/settings.php';

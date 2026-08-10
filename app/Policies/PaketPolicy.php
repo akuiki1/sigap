@@ -6,24 +6,22 @@ use App\Models\Paket;
 use App\Models\User;
 
 /**
- * Aturan "siapa boleh apa" atas data paket. Semua peran boleh melihat;
- * hanya peran ber-hak-input (admin/operator) yang boleh menambah & mengubah;
- * hanya admin yang boleh menghapus. Verifikasi berkas/progres diatur di
- * policy-nya masing-masing, bukan di sini.
+ * Aturan "siapa boleh apa" atas data paket.
+ *
+ * Sejak peran diciutkan jadi admin & operator (lihat App\Enums\Role), keduanya
+ * berhak penuh atas data paket — pembedanya hanya kelola akun, yang diatur di
+ * App\Policies\UserPolicy. Jadi gerbang di sini tinggal autentikasi itu sendiri
+ * (middleware `auth` di routes/web.php), dan policy-nya sengaja dipertahankan
+ * agar panggilan authorize() di controller tetap punya satu tempat berlabuh
+ * kalau suatu saat pembatasan per-paket (mis. hanya PPTK pemilik paket) muncul.
  */
 class PaketPolicy
 {
-    /**
-     * Semua pengguna terautentikasi boleh melihat daftar paket.
-     */
     public function viewAny(User $user): bool
     {
         return true;
     }
 
-    /**
-     * Semua pengguna terautentikasi boleh melihat detail paket.
-     */
     public function view(User $user, Paket $paket): bool
     {
         return true;
@@ -31,16 +29,21 @@ class PaketPolicy
 
     public function create(User $user): bool
     {
-        return $user->bisaInput();
+        return true;
     }
 
     public function update(User $user, Paket $paket): bool
     {
-        return $user->bisaInput();
+        return true;
     }
 
+    /**
+     * Menghapus paket ikut menghapus checklist, berkas, dan progres di
+     * bawahnya. Dulu dibatasi admin; sekarang terbuka untuk operator juga
+     * karena operator memang pemilik data hariannya.
+     */
     public function delete(User $user, Paket $paket): bool
     {
-        return $user->is_admin;
+        return true;
     }
 }

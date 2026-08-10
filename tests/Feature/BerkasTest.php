@@ -98,30 +98,16 @@ class BerkasTest extends TestCase
         ])->assertSessionHasErrors('file');
     }
 
-    public function test_auditor_cannot_upload_berkas(): void
+    public function test_guests_cannot_upload_berkas(): void
     {
         Storage::fake('local');
-        $this->actingAs(User::factory()->auditor()->create());
 
         $paket = Paket::factory()->create();
         $item = $this->checklistItem();
 
         $this->post(route('paket.dokumen.berkas.store', ['paket' => $paket, 'checklistDokumen' => $item]), [
             'file' => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
-        ])->assertForbidden();
-    }
-
-    public function test_pengawas_cannot_upload_berkas(): void
-    {
-        Storage::fake('local');
-        $this->actingAs(User::factory()->pengawas()->create());
-
-        $paket = Paket::factory()->create();
-        $item = $this->checklistItem();
-
-        $this->post(route('paket.dokumen.berkas.store', ['paket' => $paket, 'checklistDokumen' => $item]), [
-            'file' => UploadedFile::fake()->create('doc.pdf', 100, 'application/pdf'),
-        ])->assertForbidden();
+        ])->assertRedirect(route('login'));
     }
 
     protected function uploadedBerkas(): Berkas
@@ -142,10 +128,10 @@ class BerkasTest extends TestCase
         ])->berkasTerkini;
     }
 
-    public function test_pengawas_can_verify_a_berkas(): void
+    public function test_a_berkas_can_be_verified(): void
     {
         $berkas = $this->uploadedBerkas();
-        $this->actingAs(User::factory()->pengawas()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $this->patch(route('berkas.verify', $berkas), [
             'keputusan' => 'diverifikasi',
@@ -164,7 +150,7 @@ class BerkasTest extends TestCase
     public function test_rejecting_a_berkas_reverts_dokumen_status_to_belum(): void
     {
         $berkas = $this->uploadedBerkas();
-        $this->actingAs(User::factory()->pengawas()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $this->patch(route('berkas.verify', $berkas), [
             'keputusan' => 'ditolak',
@@ -182,27 +168,27 @@ class BerkasTest extends TestCase
     public function test_rejecting_without_a_note_fails_validation(): void
     {
         $berkas = $this->uploadedBerkas();
-        $this->actingAs(User::factory()->pengawas()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $this->patch(route('berkas.verify', $berkas), [
             'keputusan' => 'ditolak',
         ])->assertSessionHasErrors('catatan_verifikasi');
     }
 
-    public function test_operator_cannot_verify_berkas(): void
+    public function test_guests_cannot_verify_berkas(): void
     {
         $berkas = $this->uploadedBerkas();
-        $this->actingAs(User::factory()->operator()->create());
+        $this->app['auth']->guard()->logout();
 
         $this->patch(route('berkas.verify', $berkas), [
             'keputusan' => 'diverifikasi',
-        ])->assertForbidden();
+        ])->assertRedirect(route('login'));
     }
 
     public function test_any_authenticated_role_can_download_a_berkas(): void
     {
         $berkas = $this->uploadedBerkas();
-        $this->actingAs(User::factory()->auditor()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $this->get(route('berkas.download', $berkas))->assertOk();
     }
@@ -219,7 +205,7 @@ class BerkasTest extends TestCase
     public function test_preview_serves_pdf_inline_so_it_renders_in_the_panel(): void
     {
         $berkas = $this->uploadedBerkas();
-        $this->actingAs(User::factory()->auditor()->create());
+        $this->actingAs(User::factory()->operator()->create());
 
         $response = $this->get(route('berkas.preview', $berkas))
             ->assertOk()

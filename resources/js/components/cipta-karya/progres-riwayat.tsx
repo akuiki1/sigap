@@ -178,13 +178,7 @@ function KartuFoto({ foto }: { foto: ProgresFoto }) {
     );
 }
 
-function KartuProgres({
-    entry,
-    canVerify,
-}: {
-    entry: ProgresEntry;
-    canVerify: boolean;
-}) {
+function KartuProgres({ entry }: { entry: ProgresEntry }) {
     const [tolakOpen, setTolakOpen] = useState(false);
     const [catatan, setCatatan] = useState('');
     const [verifying, setVerifying] = useState(false);
@@ -295,7 +289,7 @@ function KartuProgres({
                     </div>
                 )}
 
-            {canVerify && entry.status_verifikasi === 'diajukan' && (
+            {entry.status_verifikasi === 'diajukan' && (
                 <div style={{ display: 'flex', gap: 9, marginTop: 12 }}>
                     <button
                         type="button"
@@ -374,13 +368,7 @@ function KartuProgres({
     );
 }
 
-export function ProgresRiwayat({
-    entries,
-    canVerify,
-}: {
-    entries: ProgresEntry[];
-    canVerify: boolean;
-}) {
+export function ProgresRiwayat({ entries }: { entries: ProgresEntry[] }) {
     if (entries.length === 0) {
         return (
             <CkCard>
@@ -401,11 +389,7 @@ export function ProgresRiwayat({
     return (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {entries.map((entry) => (
-                <KartuProgres
-                    key={entry.id}
-                    entry={entry}
-                    canVerify={canVerify}
-                />
+                <KartuProgres key={entry.id} entry={entry} />
             ))}
         </div>
     );

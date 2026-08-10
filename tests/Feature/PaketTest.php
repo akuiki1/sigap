@@ -237,7 +237,6 @@ class PaketTest extends TestCase
 
     public function test_paket_can_be_deleted(): void
     {
-        // Hapus paket hanya boleh oleh admin.
         $this->actingAs(User::factory()->admin()->create());
         $paket = Paket::factory()->create();
 
@@ -247,40 +246,29 @@ class PaketTest extends TestCase
         $this->assertSame(0, Paket::count());
     }
 
-    public function test_auditor_cannot_create_update_or_delete_pakets(): void
+    public function test_operator_can_input_and_delete_pakets(): void
     {
-        $this->actingAs(User::factory()->auditor()->create());
-        $paket = Paket::factory()->create();
-
-        // Auditor hanya boleh melihat — semua aksi ubah ditolak 403.
-        $this->get(route('paket.create'))->assertForbidden();
-        $this->post(route('paket.store'), $this->validPayload())->assertForbidden();
-        $this->get(route('paket.edit', $paket))->assertForbidden();
-        $this->put(route('paket.update', $paket), $this->validPayload([
-            'kode_paket' => $paket->kode_paket,
-        ]))->assertForbidden();
-        $this->delete(route('paket.destroy', $paket))->assertForbidden();
-
-        // Auditor tetap boleh melihat daftar & detail.
-        $this->get(route('paket.index'))->assertOk();
-        $this->get(route('paket.show', $paket))->assertOk();
-    }
-
-    public function test_operator_can_input_but_cannot_delete_pakets(): void
-    {
+        // Operator berhak penuh atas data paket, termasuk menghapus: peran
+        // hanya dibedakan oleh kelola akun (lihat App\Enums\Role).
         $this->actingAs(User::factory()->operator()->create());
         $paket = Paket::factory()->create();
 
         $this->post(route('paket.store'), $this->validPayload())->assertRedirect();
-        $this->delete(route('paket.destroy', $paket))->assertForbidden();
+        $this->delete(route('paket.destroy', $paket))
+            ->assertRedirect(route('paket.index'));
+
+        $this->assertDatabaseMissing('pakets', ['id' => $paket->id]);
     }
 
-    public function test_pengawas_cannot_input_pakets(): void
+    public function test_guests_cannot_touch_pakets(): void
     {
-        $this->actingAs(User::factory()->pengawas()->create());
+        $paket = Paket::factory()->create();
 
-        // Pengawas memverifikasi, bukan menginput — pembuatan paket ditolak.
-        $this->get(route('paket.create'))->assertForbidden();
-        $this->post(route('paket.store'), $this->validPayload())->assertForbidden();
+        // Gerbangnya tinggal autentikasi, jadi justru ini yang perlu dijaga.
+        $this->get(route('paket.index'))->assertRedirect(route('login'));
+        $this->post(route('paket.store'), $this->validPayload())
+            ->assertRedirect(route('login'));
+        $this->delete(route('paket.destroy', $paket))
+            ->assertRedirect(route('login'));
     }
 }

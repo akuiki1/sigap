@@ -1,5 +1,7 @@
 import * as DialogPrimitive from '@radix-ui/react-dialog';
+import { Eye, EyeOff } from 'lucide-react';
 import type { CSSProperties, ReactNode, Ref } from 'react';
+import { useState } from 'react';
 import { ckColors, ckFont } from './tokens';
 
 /**
@@ -200,6 +202,58 @@ export function CkInput({
             style={{ ...kontrolStyle, ...style }}
             {...props}
         />
+    );
+}
+
+/**
+ * Kolom kata sandi dengan tombol lihat/sembunyikan. Berdiri sendiri, bukan
+ * memakai `components/password-input` bawaan starter kit: yang itu dibangun di
+ * atas Input shadcn dengan tinggi & tipografi tema Tailwind, jadi terlihat
+ * sebagai kotak asing di antara CkInput pada form yang sama.
+ */
+export function CkPasswordInput({
+    ref,
+    style,
+    ...props
+}: Omit<React.ComponentProps<'input'>, 'type'> & {
+    ref?: Ref<HTMLInputElement>;
+}) {
+    const [terlihat, setTerlihat] = useState(false);
+
+    return (
+        <span style={{ position: 'relative', display: 'block' }}>
+            <input
+                ref={ref}
+                type={terlihat ? 'text' : 'password'}
+                className="ck-kontrol"
+                style={{ ...kontrolStyle, paddingRight: 40, ...style }}
+                {...props}
+            />
+            <button
+                type="button"
+                onClick={() => setTerlihat((v) => !v)}
+                tabIndex={-1}
+                aria-label={
+                    terlihat ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'
+                }
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    right: 0,
+                    height: '100%',
+                    width: 38,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: 'none',
+                    background: 'none',
+                    color: ckColors.textMuted3,
+                    cursor: 'pointer',
+                }}
+            >
+                {terlihat ? <EyeOff size={16} /> : <Eye size={16} />}
+            </button>
+        </span>
     );
 }
 

@@ -62,13 +62,11 @@ function TombolAksi({
 /** Baris pada kartu merah "Butuh tindakan sekarang". */
 function BarisTindakan({
     item,
-    canInput,
     onLihat,
     onUnggah,
     first,
 }: {
     item: DokumenChecklistItem;
-    canInput: boolean;
     onLihat: (item: DokumenChecklistItem) => void;
     onUnggah: (item: DokumenChecklistItem) => void;
     first: boolean;
@@ -127,14 +125,9 @@ function BarisTindakan({
                         Lihat
                     </TombolAksi>
                 )}
-                {canInput && (
-                    <TombolAksi
-                        variant="primary"
-                        onClick={() => onUnggah(item)}
-                    >
-                        {ditolak ? 'Unggah ulang' : 'Unggah'}
-                    </TombolAksi>
-                )}
+                <TombolAksi variant="primary" onClick={() => onUnggah(item)}>
+                    {ditolak ? 'Unggah ulang' : 'Unggah'}
+                </TombolAksi>
             </div>
         </div>
     );
@@ -142,13 +135,11 @@ function BarisTindakan({
 
 function BarisDokumen({
     item,
-    canInput,
     onLihat,
     onUnggah,
     first,
 }: {
     item: DokumenChecklistItem;
-    canInput: boolean;
     onLihat: (item: DokumenChecklistItem) => void;
     onUnggah: (item: DokumenChecklistItem) => void;
     first: boolean;
@@ -194,14 +185,9 @@ function BarisDokumen({
                         Lihat
                     </TombolAksi>
                 ) : (
-                    canInput && (
-                        <TombolAksi
-                            variant="soft"
-                            onClick={() => onUnggah(item)}
-                        >
-                            Unggah
-                        </TombolAksi>
-                    )
+                    <TombolAksi variant="soft" onClick={() => onUnggah(item)}>
+                        Unggah
+                    </TombolAksi>
                 )}
             </div>
         </div>
@@ -210,13 +196,11 @@ function BarisDokumen({
 
 export function PaketDokumen({
     sections,
-    canInput,
     onLihat,
     onUnggah,
     onUnggahBaru,
 }: {
     sections: ChecklistSection[];
-    canInput: boolean;
     onLihat: (item: DokumenChecklistItem) => void;
     onUnggah: (item: DokumenChecklistItem) => void;
     onUnggahBaru: () => void;
@@ -298,26 +282,24 @@ export function PaketDokumen({
                     </div>
                 </div>
 
-                {canInput && (
-                    <button
-                        type="button"
-                        onClick={onUnggahBaru}
-                        style={{
-                            font: 'inherit',
-                            fontSize: 13,
-                            fontWeight: 570,
-                            color: '#fff',
-                            background: ckColors.accent,
-                            border: 'none',
-                            borderRadius: 10,
-                            padding: '9px 15px',
-                            cursor: 'pointer',
-                            flex: 'none',
-                        }}
-                    >
-                        Unggah dokumen
-                    </button>
-                )}
+                <button
+                    type="button"
+                    onClick={onUnggahBaru}
+                    style={{
+                        font: 'inherit',
+                        fontSize: 13,
+                        fontWeight: 570,
+                        color: '#fff',
+                        background: ckColors.accent,
+                        border: 'none',
+                        borderRadius: 10,
+                        padding: '9px 15px',
+                        cursor: 'pointer',
+                        flex: 'none',
+                    }}
+                >
+                    Unggah dokumen
+                </button>
             </div>
 
             {tindakan.length > 0 && (
@@ -361,7 +343,6 @@ export function PaketDokumen({
                         <BarisTindakan
                             key={item.id}
                             item={item}
-                            canInput={canInput}
                             onLihat={onLihat}
                             onUnggah={onUnggah}
                             first={false}
@@ -512,7 +493,6 @@ export function PaketDokumen({
                                     <BarisDokumen
                                         key={item.id}
                                         item={item}
-                                        canInput={canInput}
                                         onLihat={onLihat}
                                         onUnggah={onUnggah}
                                         first={i === 0}
