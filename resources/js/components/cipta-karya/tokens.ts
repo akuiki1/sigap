@@ -40,11 +40,15 @@ export const ckColors = {
     warn: '#B9740A',
     warnSoft: 'rgba(185,116,10,.12)',
     /**
-     * Versi lebih pekat dari *Soft, dipakai lencana yang duduk di atas foto
-     * progres: latar setipis .1 tenggelam di gambar yang ramai.
+     * Lencana yang duduk di atas foto progres. Warnanya **buram**, bukan
+     * setengah tembus seperti *Soft: nilainya persis hasil tint mockup
+     * (danger .13 / warn .16) dikomposit di atas putih, jadi di atas kartu
+     * terang tampilannya identik dengan desain — tapi di atas foto gelap ia
+     * tidak ikut menggelap sampai teksnya hilang. Mockup tak pernah menemui
+     * ini karena "foto"-nya cuma placeholder bergaris terang.
      */
-    dangerOnFoto: 'rgba(214,58,46,.13)',
-    warnOnFoto: 'rgba(185,116,10,.16)',
+    dangerOnFoto: 'rgb(250,229,228)',
+    warnOnFoto: 'rgb(244,233,216)',
     /** Latar batang progres yang belum terisi. */
     barTrack: '#EDEBE6',
     /**

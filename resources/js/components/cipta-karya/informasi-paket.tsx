@@ -90,8 +90,11 @@ export function InformasiPaket({
         ],
     ];
 
+    // Dibungkus <div>, bukan fragment: pemanggilnya menaruh komponen ini
+    // langsung sebagai anak grid, dan fragment membuat label & kartunya
+    // dihitung sebagai dua item — keduanya lalu mendarat di kolom berbeda.
     return (
-        <>
+        <div>
             <CkSectionLabel>Informasi paket</CkSectionLabel>
             <CkCard>
                 {baris.map(([label, value], i) => (
@@ -103,6 +106,6 @@ export function InformasiPaket({
                     />
                 ))}
             </CkCard>
-        </>
+        </div>
     );
 }
