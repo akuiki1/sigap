@@ -33,10 +33,27 @@ export const ckColors = {
     hoverStrong: 'rgba(0,0,0,.025)',
     accent: '#0066b3',
     accentSoft: 'rgba(0,102,179,.12)',
+    /** Latar item navigasi aktif di topbar — sedikit lebih tipis dari accentSoft. */
+    accentTint: 'rgba(0,102,179,.1)',
     danger: '#D63A2E',
     dangerSoft: 'rgba(214,58,46,.1)',
     warn: '#B9740A',
     warnSoft: 'rgba(185,116,10,.12)',
+    /**
+     * Versi lebih pekat dari *Soft, dipakai lencana yang duduk di atas foto
+     * progres: latar setipis .1 tenggelam di gambar yang ramai.
+     */
+    dangerOnFoto: 'rgba(214,58,46,.13)',
+    warnOnFoto: 'rgba(185,116,10,.16)',
+    /** Latar batang progres yang belum terisi. */
+    barTrack: '#EDEBE6',
+    /**
+     * Placeholder foto progres pada kartu paket yang belum punya foto:
+     * garis diagonal halus, bukan blok abu polos, supaya terbaca sebagai
+     * "tempat gambar" alih-alih gambar yang gagal dimuat.
+     */
+    fotoPlaceholder:
+        'repeating-linear-gradient(135deg,#EFEDE8 0 8px,#F7F5F1 8px 16px)',
     /**
      * Kartu dibatasi garis rambut, bukan bayangan: seluruh isi halaman kini
      * berada di atas panel putih yang sudah mengambang di atas kanvas, dan

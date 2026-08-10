@@ -20,7 +20,8 @@ import { PaketRingkasan } from '@/components/cipta-karya/paket-ringkasan';
 import { CiptaKaryaShell } from '@/components/cipta-karya/shell';
 import { ckColors } from '@/components/cipta-karya/tokens';
 import { UnggahBerkasDialog } from '@/components/cipta-karya/unggah-berkas';
-import { edit, index } from '@/routes/paket';
+import { dashboard } from '@/routes';
+import { edit } from '@/routes/paket';
 import type {
     ChecklistSection,
     DokumenChecklistItem,
@@ -124,8 +125,11 @@ export default function PaketShow({
         <>
             <Head title={data.nama} />
 
+            {/* Topbar menandai "Ringkasan" sebagai aktif, bukan "Paket":
+                grid kartu di Ringkasan-lah jalan masuk utama ke halaman ini,
+                dan tautan kembali di bawah menunjuk ke sana juga. */}
             <CiptaKaryaShell
-                active="paket"
+                active="ringkasan"
                 mainStyle={{ position: 'relative' }}
             >
                 <div
@@ -137,14 +141,13 @@ export default function PaketShow({
                         backdropFilter: 'blur(20px) saturate(180%)',
                         WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                         borderBottom: `1px solid ${ckColors.border}`,
-                        borderRadius: '18px 18px 0 0',
                     }}
                 >
                     <div
                         style={{
-                            maxWidth: 1180,
+                            maxWidth: 1240,
                             margin: '0 auto',
-                            padding: '12px 32px 0',
+                            padding: '12px 36px 0',
                         }}
                     >
                         <div
@@ -156,7 +159,7 @@ export default function PaketShow({
                             }}
                         >
                             <Link
-                                href={index()}
+                                href={dashboard()}
                                 className="ck-link-accent"
                                 style={{
                                     display: 'inline-flex',
@@ -180,7 +183,7 @@ export default function PaketShow({
                                 >
                                     <path d="M8 1L1.5 7.5 8 14" />
                                 </svg>
-                                Data Paket
+                                Ringkasan
                             </Link>
 
                             <div
@@ -366,9 +369,9 @@ export default function PaketShow({
 
                 <div
                     style={{
-                        maxWidth: 1180,
+                        maxWidth: 1240,
                         margin: '0 auto',
-                        padding: '26px 32px 80px',
+                        padding: '26px 36px 60px',
                     }}
                 >
                     {tab === 'ringkasan' && (

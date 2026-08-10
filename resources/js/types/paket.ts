@@ -172,22 +172,23 @@ export type TitikKoordinat = {
 
 export type FollowupTone = 'warn' | 'danger';
 
-export type FollowupItem = {
-    paket_id: number;
-    text: string;
-    pkg: string;
-    meta: string;
-    tone: FollowupTone;
-};
-
+/**
+ * Satu kartu paket di Ringkasan. `sorot` adalah hal paling mendesak dari paket
+ * ini — dokumen wajib yang kosong atau progres yang tertinggal — dan null
+ * berarti paketnya tidak perlu perhatian; itu juga yang dipakai chip filter
+ * "Perlu perhatian". `foto` menunjuk ke berkas foto progres terbaru.
+ */
 export type DashboardPackageRow = {
     id: number;
     nama: string;
     penyedia: string | null;
     nilai_kontrak: number;
+    status: StatusPaket;
     status_label: string;
     progres: number;
-    flag: FollowupTone | null;
+    pho_hari: number | null;
+    foto: { id: number; tanggal_label: string } | null;
+    sorot: { teks: string; tone: FollowupTone } | null;
 };
 
 export type ProgresAgregatPoint = {
@@ -203,17 +204,9 @@ export type ProgresAgregat = {
     deviasi: number | null;
 };
 
-export type TenggatItem = {
-    paket_id: number;
-    title: string;
-    pkg: string;
-    hari: number;
-};
-
 export type DashboardStats = {
     paket_aktif: number;
     kesiapan_audit_persen: number;
-    dokumen_belum_lengkap: number;
     menuju_pho: number;
 };
 

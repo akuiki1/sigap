@@ -12,6 +12,17 @@
     background: rgba(0, 0, 0, 0.025);
 }
 
+/* Kartu paket di Ringkasan: hanya garis tepinya yang menguat saat disorot —
+   kartunya sudah berada di dalam panel berbayang, jadi bayangan tambahan
+   membuat batasnya kabur. */
+.ck-kartu-paket:hover {
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.ck-chip:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
 .ck-btn-accent:hover {
     opacity: 0.9;
 }
