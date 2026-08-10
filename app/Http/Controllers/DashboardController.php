@@ -6,6 +6,7 @@ use App\Enums\StatusPaket;
 use App\Models\DokumenPaket;
 use App\Models\Paket;
 use App\Models\ProgresPaket;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Inertia\Inertia;
@@ -16,19 +17,28 @@ class DashboardController extends Controller
     /**
      * Display the dashboard ("Ringkasan").
      *
-     * Halamannya berbentuk grid kartu paket, satu kartu per paket tahun
-     * anggaran berjalan. Daftar "perlu ditindaklanjuti", tenggat terdekat,
-     * dan kurva agregat yang dulu berdiri sendiri di bawah dilebur ke dalam
+     * Halamannya berbentuk grid kartu paket, satu kartu per paket pada satu
+     * tahun anggaran. Daftar "perlu ditindaklanjuti", tenggat terdekat, dan
+     * kurva agregat yang dulu berdiri sendiri di bawah dilebur ke dalam
      * kartunya masing-masing (lihat sorotKartu()): informasi yang sama, tapi
      * menempel pada paket yang bersangkutan alih-alih jadi daftar terpisah.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $today = Carbon::now();
 
+        $tahunTersedia = $this->tahunTersedia($today);
+        $tahunDipilih = $this->tahunDipilih($request, $tahunTersedia, $today);
+
         // Satu query beragregat lewat withCount untuk seluruh paket, bukan
         // N+1 per paket, supaya jumlah query tetap konstan saat data bertambah.
+        //
+        // Seluruh halaman — kartu maupun statistik di kepala — dikunci ke satu
+        // tahun anggaran. Statistik yang menjumlahkan semua tahun sementara
+        // grid-nya hanya satu tahun akan terbaca sebagai angka yang tidak cocok
+        // dengan kartu di bawahnya.
         $pakets = Paket::query()
+            ->where('tahun_anggaran', $tahunDipilih)
             ->withCount([
                 'dokumenPaket as dokumen_total_count',
                 'dokumenPaket as dokumen_ada_count' => fn ($q) => $q->where('status', 'ada'),
@@ -68,8 +78,46 @@ class DashboardController extends Controller
                 'menuju_pho' => $menujuPho,
             ],
             'packages' => $this->buildPackages($pakets, $today),
-            'tahunBerjalan' => $today->year,
+            'tahunDipilih' => $tahunDipilih,
+            'tahunTersedia' => $tahunTersedia,
         ]);
+    }
+
+    /**
+     * Tahun anggaran yang punya paket, terbaru dulu. Tahun berjalan selalu
+     * ikut walau belum ada paketnya — kalau tidak, penyaring tahun pada DB
+     * kosong tidak punya satu pun pilihan untuk ditampilkan.
+     *
+     * @return list<int>
+     */
+    private function tahunTersedia(Carbon $today): array
+    {
+        $tahun = Paket::query()
+            ->select('tahun_anggaran')
+            ->distinct()
+            ->pluck('tahun_anggaran')
+            ->push($today->year)
+            ->unique()
+            ->sortDesc()
+            ->values()
+            ->all();
+
+        /** @var list<int> $tahun */
+        return $tahun;
+    }
+
+    /**
+     * Tahun dari query string, jatuh ke tahun berjalan bila tidak diisi atau
+     * tidak ada paketnya. Divalidasi terhadap daftar yang tersedia supaya
+     * ?tahun= sembarang tidak menghasilkan halaman kosong tanpa penjelasan.
+     *
+     * @param  list<int>  $tahunTersedia
+     */
+    private function tahunDipilih(Request $request, array $tahunTersedia, Carbon $today): int
+    {
+        $diminta = $request->integer('tahun');
+
+        return in_array($diminta, $tahunTersedia, true) ? $diminta : $today->year;
     }
 
     /**
@@ -88,7 +136,8 @@ class DashboardController extends Controller
     }
 
     /**
-     * Satu kartu per paket tahun anggaran berjalan.
+     * Satu kartu per paket. Penyaringan tahunnya sudah dilakukan di query
+     * index(), jadi di sini semua paket yang masuk memang mau ditampilkan.
      *
      * Mengembalikan array biasa (bukan Collection): Illuminate\Support\Collection
      * men-declare TValue invariant, jadi anotasi shape presisi untuk hasil
@@ -101,14 +150,9 @@ class DashboardController extends Controller
      */
     private function buildPackages(Collection $pakets, Carbon $today): array
     {
-        $tahunBerjalan = $today->year;
+        $namaWajibBelum = $this->namaDokumenWajibBelum($pakets);
 
-        /** @var Collection<int, Paket> $tahunIni */
-        $tahunIni = $pakets->filter(fn (Paket $p) => $p->tahun_anggaran === $tahunBerjalan);
-
-        $namaWajibBelum = $this->namaDokumenWajibBelum($tahunIni);
-
-        return $tahunIni
+        return $pakets
             ->map(function (Paket $p) use ($namaWajibBelum, $today) {
                 $sorot = $this->sorotKartu($p, $namaWajibBelum->get($p->id, collect()));
 

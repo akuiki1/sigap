@@ -8,13 +8,12 @@ import {
 import { UserMenuContent } from '@/components/user-menu-content';
 import { useInitials } from '@/hooks/use-initials';
 import { dashboard } from '@/routes';
-import { review } from '@/routes/audit';
 import { index as dokumenIndex } from '@/routes/dokumen';
 import { index as paketIndex } from '@/routes/paket';
 import './cipta-karya.css';
 import { ckColors } from './tokens';
 
-export type CiptaKaryaNavKey = 'ringkasan' | 'paket' | 'dokumen' | 'audit';
+export type CiptaKaryaNavKey = 'ringkasan' | 'paket' | 'dokumen';
 
 /**
  * Navigasi pindah dari sidebar 246px ke baris atas panel: dengan menunya
@@ -25,7 +24,6 @@ const MENU: { key: CiptaKaryaNavKey; label: string; href: string }[] = [
     { key: 'ringkasan', label: 'Ringkasan', href: dashboard().url },
     { key: 'paket', label: 'Paket', href: paketIndex().url },
     { key: 'dokumen', label: 'Dokumen', href: dokumenIndex().url },
-    { key: 'audit', label: 'Mode audit', href: review().url },
 ];
 
 function ChevronRight() {

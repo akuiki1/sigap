@@ -37,9 +37,13 @@ class DashboardTest extends TestCase
     {
         $this->actingAs(User::factory()->create());
 
-        Paket::factory()->count(3)->aktif()->create();
-        Paket::factory()->count(2)->selesai()->create();
-        Paket::factory()->count(1)->menungguAudit()->create();
+        // Tahun dipatok: statistik kini ikut tahun anggaran yang dipilih, dan
+        // factory-nya mengacak tahun antara 2023–2026.
+        $tahunIni = ['tahun_anggaran' => Carbon::now()->year];
+
+        Paket::factory()->count(3)->aktif()->create($tahunIni);
+        Paket::factory()->count(2)->selesai()->create($tahunIni);
+        Paket::factory()->count(1)->menungguAudit()->create($tahunIni);
 
         $this->get(route('dashboard'))
             ->assertOk()
@@ -64,7 +68,7 @@ class DashboardTest extends TestCase
             );
     }
 
-    public function test_packages_list_is_scoped_to_the_current_tahun_anggaran(): void
+    public function test_packages_list_defaults_to_the_current_tahun_anggaran(): void
     {
         $this->actingAs(User::factory()->create());
 
@@ -75,7 +79,63 @@ class DashboardTest extends TestCase
 
         $this->get(route('dashboard'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->has('packages', 2));
+            ->assertInertia(
+                fn (AssertableInertia $page) => $page
+                    ->has('packages', 2)
+                    ->where('tahunDipilih', $tahunIni)
+                    ->where('tahunTersedia', [$tahunIni, $tahunIni - 1])
+            );
+    }
+
+    public function test_tahun_anggaran_lampau_dapat_dipilih_lewat_query_string(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $tahunIni = Carbon::now()->year;
+
+        Paket::factory()->count(2)->create(['tahun_anggaran' => $tahunIni]);
+        Paket::factory()->aktif()->create(['tahun_anggaran' => $tahunIni - 1]);
+
+        $this->get(route('dashboard', ['tahun' => $tahunIni - 1]))
+            ->assertOk()
+            ->assertInertia(
+                fn (AssertableInertia $page) => $page
+                    ->has('packages', 1)
+                    ->where('tahunDipilih', $tahunIni - 1)
+                    // Statistik ikut tahun yang dipilih, bukan menjumlahkan
+                    // semua tahun — kalau tidak, angkanya tidak cocok dengan
+                    // kartu di bawahnya.
+                    ->where('stats.paket_aktif', 1)
+            );
+    }
+
+    public function test_tahun_tanpa_paket_jatuh_kembali_ke_tahun_berjalan(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $tahunIni = Carbon::now()->year;
+
+        Paket::factory()->create(['tahun_anggaran' => $tahunIni]);
+
+        $this->get(route('dashboard', ['tahun' => 1999]))
+            ->assertOk()
+            ->assertInertia(
+                fn (AssertableInertia $page) => $page
+                    ->where('tahunDipilih', $tahunIni)
+                    ->has('packages', 1)
+            );
+    }
+
+    public function test_tahun_berjalan_selalu_tersedia_walau_belum_ada_paket(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(
+                fn (AssertableInertia $page) => $page
+                    ->where('tahunTersedia', [Carbon::now()->year])
+            );
     }
 
     public function test_kartu_menyorot_dokumen_wajib_yang_belum_diunggah(): void

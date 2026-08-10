@@ -1,9 +1,10 @@
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import '@/components/cipta-karya/cipta-karya.css';
 import { KartuPaket } from '@/components/cipta-karya/kartu-paket';
 import { CiptaKaryaShell } from '@/components/cipta-karya/shell';
 import { ckColors } from '@/components/cipta-karya/tokens';
+import { dashboard } from '@/routes';
 import { create } from '@/routes/paket';
 import type { DashboardPackageRow, DashboardStats } from '@/types';
 
@@ -11,7 +12,8 @@ type DashboardProps = {
     todayLabel: string;
     stats: DashboardStats;
     packages: DashboardPackageRow[];
-    tahunBerjalan: number;
+    tahunDipilih: number;
+    tahunTersedia: number[];
 };
 
 /**
@@ -79,6 +81,83 @@ function Statistik({
     );
 }
 
+/**
+ * Penyaring tahun anggaran. Berbeda dari chip status yang murni sisi klien:
+ * tahun menentukan paket mana yang diambil server, jadi ia jadi kunjungan
+ * Inertia dengan `?tahun=` — sekaligus membuat tautan ke arsip tahun lalu
+ * bisa dibagikan apa adanya.
+ */
+function PilihTahun({
+    dipilih,
+    tersedia,
+}: {
+    dipilih: number;
+    tersedia: number[];
+}) {
+    return (
+        <label
+            className="ck-chip"
+            style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                marginLeft: 'auto',
+                padding: '7px 13px',
+                borderRadius: 999,
+                border: '1px solid rgba(0,0,0,.1)',
+                fontSize: 13,
+                fontWeight: 530,
+                color: '#3F3E3A',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                transition: 'background-color .12s ease',
+            }}
+        >
+            <span style={{ color: ckColors.textMuted }}>TA</span>
+            <select
+                value={dipilih}
+                onChange={(e) =>
+                    router.get(
+                        dashboard().url,
+                        { tahun: e.target.value },
+                        { preserveScroll: true },
+                    )
+                }
+                aria-label="Tahun anggaran"
+                style={{
+                    appearance: 'none',
+                    border: 'none',
+                    background: 'transparent',
+                    outline: 'none',
+                    font: 'inherit',
+                    color: 'inherit',
+                    cursor: 'pointer',
+                    padding: 0,
+                    fontVariantNumeric: 'tabular-nums',
+                }}
+            >
+                {tersedia.map((tahun) => (
+                    <option key={tahun} value={tahun}>
+                        {tahun}
+                    </option>
+                ))}
+            </select>
+            <svg
+                width="9"
+                height="6"
+                viewBox="0 0 9 6"
+                fill="none"
+                stroke={ckColors.chevron}
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+            >
+                <path d="M1 1l3.5 3.5L8 1" />
+            </svg>
+        </label>
+    );
+}
+
 function PemisahStatistik() {
     return (
         <div
@@ -95,7 +174,8 @@ export default function Dashboard({
     todayLabel,
     stats,
     packages,
-    tahunBerjalan,
+    tahunDipilih,
+    tahunTersedia,
 }: DashboardProps) {
     const { auth } = usePage().props;
     const [query, setQuery] = useState('');
@@ -237,7 +317,7 @@ export default function Dashboard({
                                     letterSpacing: '.01em',
                                 }}
                             >
-                                {todayLabel} · TA {tahunBerjalan}
+                                {todayLabel} · TA {tahunDipilih}
                             </div>
                             <h1
                                 style={{
@@ -334,6 +414,11 @@ export default function Dashboard({
                                 </button>
                             );
                         })}
+
+                        <PilihTahun
+                            dipilih={tahunDipilih}
+                            tersedia={tahunTersedia}
+                        />
                     </div>
 
                     {terlihat.length === 0 ? (
@@ -349,7 +434,7 @@ export default function Dashboard({
                             }}
                         >
                             {packages.length === 0
-                                ? `Belum ada paket untuk TA ${tahunBerjalan}.`
+                                ? `Belum ada paket untuk TA ${tahunDipilih}.`
                                 : 'Tidak ada paket yang cocok dengan penyaringan ini.'}
                         </div>
                     ) : (

@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BerkasController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DokumenController;
@@ -40,8 +39,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('koordinat.destroy');
 
     Route::get('dokumen', [DokumenController::class, 'index'])->name('dokumen.index');
-
-    Route::get('audit', [AuditController::class, 'review'])->name('audit.review');
 });
 
 require __DIR__.'/settings.php';
